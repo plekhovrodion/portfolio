@@ -3,7 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Info, Music, Pause } from "lucide-react";
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 import { useEffect, useRef, useState } from "react";
 
 type DesktopFile = {
@@ -58,6 +62,7 @@ const CASE_WINDOW_HEIGHT = 780;
 const CASE_WINDOW_ANIMATION_MS = 220;
 const MOBILE_LAYOUT_BREAKPOINT = 900;
 const NARROW_MOBILE_BREAKPOINT = 520;
+const MOBILE_FILE_COLUMNS = 3;
 const MUSIC_BACKGROUND_VIDEO = "/dancing-rat-chess-type-beat.webm";
 
 const desktopFiles: DesktopFile[] = [
@@ -104,17 +109,17 @@ function getResponsivePosition(
 function getMobileFilePosition(index: number, stageSize: StageSize) {
   const isNarrow = stageSize.width <= NARROW_MOBILE_BREAKPOINT;
   const sidePadding = isNarrow ? 8 : 14;
-  const columns = isNarrow ? 2 : 3;
-  const rowGap = isNarrow ? 146 : 150;
+  const rowGap = isNarrow ? 116 : 130;
   const availableWidth = stageSize.width - sidePadding * 2;
-  const cellWidth = availableWidth / columns;
-  const column = index % columns;
-  const row = Math.floor(index / columns);
-  const x = sidePadding + column * cellWidth + (cellWidth - FILE_WIDTH) / 2;
-  const y = HEADER_HEIGHT + (isNarrow ? 292 : 284) + row * rowGap;
+  const cellWidth = availableWidth / MOBILE_FILE_COLUMNS;
+  const fileWidth = Math.min(FILE_WIDTH, cellWidth);
+  const column = index % MOBILE_FILE_COLUMNS;
+  const row = Math.floor(index / MOBILE_FILE_COLUMNS);
+  const x = sidePadding + column * cellWidth + (cellWidth - fileWidth) / 2;
+  const y = HEADER_HEIGHT + (isNarrow ? 232 : 228) + row * rowGap;
 
   return {
-    x: clamp(x, 0, Math.max(0, stageSize.width - FILE_WIDTH)),
+    x: clamp(x, 0, Math.max(0, stageSize.width - fileWidth)),
     y,
   };
 }
@@ -171,7 +176,225 @@ function DesktopFileIcon({
   );
 }
 
+function CaseImageSlot({ label }: { label: string }) {
+  return (
+    <div className="flex min-h-[260px] w-full items-center justify-center rounded-[28px] border border-dashed border-white/24 bg-white/8 px-6 text-center text-base font-semibold leading-6 tracking-[-0.2px] text-white/52">
+      {label}
+    </div>
+  );
+}
+
+function CaseSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function UnifiedProfileCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full max-w-[800px] flex-1 flex-col gap-10 self-center overflow-y-auto pr-2 text-[#fafafa]">
+      <section className="flex flex-col gap-5">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
+            Продуктовый дизайн
+          </span>
+          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
+            SberEducation
+          </span>
+          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
+            Единый аккаунт
+          </span>
+        </div>
+        <div className="flex flex-col gap-3">
+          <h2 className="text-[40px] font-semibold leading-[48px] tracking-[-1px]">
+            Единый профиль для сервисов СберОбразования
+          </h2>
+          <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
+            У СберОбразования было четыре независимых продукта: каждый со своим
+            входом, регистрацией, админкой, базой пользователей и логикой
+            авторизации. Команда тратила много времени на поддержку разных
+            систем, а пользователи путались и теряли доступ.
+          </p>
+        </div>
+      </section>
+
+      <CaseImageSlot label="Место для изображения: обложка кейса или схема четырех продуктов до объединения" />
+
+      <CaseSection title="Цель проекта">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Мы проектировали единый аккаунт для всех сервисов, чтобы упростить
+          вход и регистрацию, снизить нагрузку на поддержку, повысить конверсию
+          в регистрацию и собрать данные пользователя в едином профиле.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            "Единый вход по телефону или email",
+            "Регистрация через OTP",
+            "Общий профиль пользователя",
+            "Единая логика ошибок и восстановления",
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl bg-white/10 p-4 text-base font-semibold leading-6 tracking-[-0.2px] text-white/84"
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </CaseSection>
+
+      <CaseSection title="Моя роль">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Я работал как продуктовый дизайнер и отвечал за полный цикл: помог
+          сформировать понимание задачи, провел дискавери и исследование,
+          сформулировал и приоритизировал гипотезы, спроектировал UX/UI,
+          согласовал решения с разработкой и вел авторский надзор до релиза.
+        </p>
+      </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: процесс работы, карта стейкхолдеров или структура проекта" />
+
+      <CaseSection title="Исследование">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Я проанализировал четыре продукта: изучил воронки входа и регистрации,
+          нашел точки, где пользователи чаще всего спотыкаются, и выявил
+          несоответствия в логике сценариев и UI.
+        </p>
+        <ul className="grid gap-3 text-base font-normal leading-6 tracking-[-0.2px] text-white/76 sm:grid-cols-2">
+          {[
+            "лишние шаги в регистрации",
+            "непонятные статусы",
+            "дублирующие поля",
+            "разная логика восстановления доступа",
+          ].map((item) => (
+            <li key={item} className="rounded-2xl bg-white/8 p-4">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Анализ аналогов и гипотезы">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Я изучил лучшие практики Яндекс ID, ВК ID, Госуслуг, Skyeng и
+          Фоксфорда. Собрал паттерны по регистрации, восстановлению доступа,
+          двухфакторной аутентификации и управлению профилем.
+        </p>
+        <div className="grid gap-3">
+          {[
+            "Единый аккаунт снизит количество обращений в поддержку.",
+            "Упрощенная регистрация через телефон/email и OTP повысит конверсию.",
+            "Единый профиль уменьшит ошибки при передаче данных между сервисами.",
+            "Двухфакторная аутентификация повысит доверие пользователей.",
+          ].map((item, index) => (
+            <div
+              key={item}
+              className="flex gap-4 rounded-2xl bg-white/10 p-4 text-base leading-6 tracking-[-0.2px] text-white/80"
+            >
+              <span className="font-semibold text-white/48">0{index + 1}</span>
+              <p>{item}</p>
+            </div>
+          ))}
+        </div>
+      </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: CJM, карта проблем или таблица анализа аналогов" />
+
+      <CaseSection title="Ключевые экраны">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          В прототип вошли сценарии регистрации и входа, профиль пользователя,
+          двухфакторная аутентификация, удаление аккаунта по требованиям ИБ и
+          единая система ошибок с понятными текстами восстановления.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            "Вход по телефону или email, OTP-код и установка пароля",
+            "Имя, дата рождения, аватар и синхронизация между сервисами",
+            "Опциональная 2FA с двумя способами подтверждения входа",
+            "Удаление аккаунта по запросу со стиранием данных в течение 30 дней",
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-2xl border border-white/10 bg-white/8 p-4 text-base font-normal leading-6 tracking-[-0.2px] text-white/76"
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </CaseSection>
+
+      <CaseSection title="UX-тестирование">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Мы протестировали прототипы на 12 респондентах: 6 родителях и 6
+          школьниках. Тестирование показало путаницу в шагах регистрации,
+          непонимание, зачем нужен пароль после OTP, и сложности с
+          подтверждением email. После этого мы улучшили последовательность
+          шагов, тексты, подсказки и визуальные статусы.
+        </p>
+      </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: прототипы, экраны регистрации или результаты UX-тестирования" />
+
+      <CaseSection title="Результаты">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            ["-28%", "обращений по входу"],
+            ["-35%", "повторных обращений"],
+            ["-18%", "времени обработки тикетов"],
+            ["62% → 74%", "рост конверсии в регистрацию"],
+          ].map(([value, label]) => (
+            <div key={label} className="rounded-[24px] bg-white p-5 text-black">
+              <p className="text-[32px] font-semibold leading-10 tracking-[-0.8px]">
+                {value}
+              </p>
+              <p className="mt-1 text-base font-semibold leading-6 tracking-[-0.2px] text-black/64">
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
+      </CaseSection>
+    </div>
+  );
+}
+
+function CasePlaceholder({ title }: { title: string }) {
+  return (
+    <>
+      <div className="flex w-full max-w-[800px] flex-col items-start gap-2 self-center text-[#fafafa]">
+        <h2 className="text-[32px] font-semibold leading-10 tracking-[-0.6px]">
+          {title}
+        </h2>
+        <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
+          Кейс скоро появится
+        </h3>
+        <p className="case-lead text-xl font-semibold leading-6 tracking-[-0.6px]">
+          Описание и фотографии
+        </p>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px]">
+          Здесь будет подробное описание проекта, задачи, решения и результата.
+          Фотографии и материалы можно будет добавить позже.
+        </p>
+      </div>
+
+      <div className="min-h-[280px] flex-1 rounded-2xl bg-white" />
+    </>
+  );
+}
+
 function CaseWindow({
+  caseId,
   title,
   position,
   stageSize,
@@ -183,6 +406,7 @@ function CaseWindow({
   onToggleMaximize,
   onDragStart,
 }: {
+  caseId: string;
   title: string;
   position: Position;
   stageSize: StageSize;
@@ -296,29 +520,18 @@ function CaseWindow({
         </div>
       </header>
 
-      <div className="flex w-full max-w-[800px] flex-col items-start gap-2 self-center text-[#fafafa]">
-        <h2 className="text-[32px] font-semibold leading-10 tracking-[-0.6px]">
-          {title}
-        </h2>
-        <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
-          Кейс скоро появится
-        </h3>
-        <p className="text-xl font-semibold leading-6 tracking-[-0.6px]">
-          Описание и фотографии
-        </p>
-        <p className="text-base font-normal leading-6 tracking-[-0.2px]">
-          Здесь будет подробное описание проекта, задачи, решения и результата.
-          Фотографии и материалы можно будет добавить позже.
-        </p>
-      </div>
-
-      <div className="min-h-[280px] flex-1 rounded-2xl bg-white" />
+      {caseId === "profile" ? (
+        <UnifiedProfileCase />
+      ) : (
+        <CasePlaceholder title={title} />
+      )}
     </article>
   );
 }
 
 export default function Home() {
   const stageRef = useRef<HTMLElement>(null);
+  const backgroundVideoRef = useRef<HTMLVideoElement>(null);
   const musicVideoRef = useRef<HTMLVideoElement>(null);
   const dragMovedRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
@@ -472,6 +685,12 @@ export default function Home() {
       window.clearTimeout(timeoutId);
       window.clearInterval(intervalId);
     };
+  }, []);
+
+  useEffect(() => {
+    void backgroundVideoRef.current?.play().catch(() => {
+      // Mobile browsers can still block autoplay in low-power modes.
+    });
   }, []);
 
   function getStagePoint(clientX: number, clientY: number) {
@@ -641,6 +860,7 @@ export default function Home() {
   return (
     <main className="portfolio-main relative grid h-svh w-screen place-items-center bg-black text-[#fafafa]">
       <video
+        ref={backgroundVideoRef}
         aria-hidden="true"
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
           isMusicPlaying ? "opacity-0" : "opacity-100"
@@ -649,6 +869,12 @@ export default function Home() {
         loop
         muted
         playsInline
+        preload="auto"
+        onCanPlay={(event) => {
+          void event.currentTarget.play().catch(() => {
+            // Keep the static black fallback if the browser blocks autoplay.
+          });
+        }}
       >
         <source
           src="/stars-sky-constellation-4k-live-wallpaper.webm"
@@ -661,6 +887,7 @@ export default function Home() {
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
           isMusicPlaying ? "opacity-100" : "opacity-0"
         }`}
+        autoPlay
         loop
         muted={!isMusicPlaying}
         playsInline
@@ -732,6 +959,7 @@ export default function Home() {
 
         {activeCase ? (
           <CaseWindow
+            caseId={activeCase.id}
             title={activeCase.label}
             position={caseWindowPosition}
             stageSize={stageSize}

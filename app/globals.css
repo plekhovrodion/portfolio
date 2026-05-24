@@ -228,7 +228,7 @@ html {
 
   .desktop-file {
     position: absolute;
-    width: 128px;
+    width: min(128px, calc((100% - 28px) / 3));
     cursor: grab;
   }
 
@@ -247,12 +247,12 @@ html {
     line-height: 28px;
   }
 
-  .case-window p:first-of-type {
+  .case-window .case-lead {
     font-size: 18px;
     line-height: 24px;
   }
 
-  .case-window p:last-of-type {
+  .case-window .case-description {
     font-size: 14px;
     line-height: 20px;
   }
@@ -285,6 +285,10 @@ html {
 
   .desktop-file-icon {
     padding: 8px;
+  }
+
+  .desktop-file {
+    width: calc((100% - 16px) / 3);
   }
 
   .desktop-file-icon > div {
