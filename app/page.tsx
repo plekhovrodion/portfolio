@@ -178,9 +178,11 @@ function DesktopFileIcon({
 
 function CaseImageSlot({ label }: { label: string }) {
   return (
-    <div className="flex min-h-[260px] w-full items-center justify-center rounded-[28px] border border-dashed border-white/24 bg-white/8 px-6 text-center text-base font-semibold leading-6 tracking-[-0.2px] text-white/52">
-      {label}
-    </div>
+    <div
+      aria-label={label}
+      className="mx-4 aspect-video shrink-0 rounded-2xl bg-white/10"
+      role="img"
+    />
   );
 }
 
@@ -192,7 +194,7 @@ function CaseSection({
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4">
+    <section className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
       <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
         {title}
       </h3>
@@ -203,168 +205,319 @@ function CaseSection({
 
 function UnifiedProfileCase() {
   return (
-    <div className="case-content flex min-h-0 w-full max-w-[800px] flex-1 flex-col gap-10 self-center overflow-y-auto pr-2 text-[#fafafa]">
-      <section className="flex flex-col gap-5">
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
-            Продуктовый дизайн
-          </span>
-          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
-            SberEducation
-          </span>
-          <span className="rounded-full bg-white/12 px-3 py-1 text-sm font-semibold leading-5 text-white/72">
-            Единый аккаунт
-          </span>
-        </div>
-        <div className="flex flex-col gap-3">
-          <h2 className="text-[40px] font-semibold leading-[48px] tracking-[-1px]">
-            Единый профиль для сервисов СберОбразования
-          </h2>
-          <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
-            У СберОбразования было четыре независимых продукта: каждый со своим
-            входом, регистрацией, админкой, базой пользователей и логикой
-            авторизации. Команда тратила много времени на поддержку разных
-            систем, а пользователи путались и теряли доступ.
-          </p>
-        </div>
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <section className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
+        <h2 className="text-[40px] font-semibold leading-[48px] tracking-[-1px]">
+          Единый профиль для сервисов СберОбразования
+        </h2>
+        <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
+          Контекст
+        </h3>
+        <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
+          У СберОбразования было четыре независимых продукта, каждый со своим:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>входом и регистрацией</li>
+          <li>админкой</li>
+          <li>базой пользователей</li>
+          <li>логикой авторизации</li>
+        </ul>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Команда тратила много времени на поддержку четырёх разных систем, а
+          пользователи путались и теряли доступ.
+        </p>
       </section>
+
+      <CaseSection title="Результаты">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>количество обращений по входу снизилось на 28%</li>
+          <li>повторные обращения уменьшились на 35%</li>
+          <li>время обработки тикетов сократилось на 18%</li>
+          <li>конверсия в регистрацию выросла с 62% до 74%</li>
+        </ul>
+      </CaseSection>
 
       <CaseImageSlot label="Место для изображения: обложка кейса или схема четырех продуктов до объединения" />
 
       <CaseSection title="Цель проекта">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          Мы проектировали единый аккаунт для всех сервисов, чтобы упростить
-          вход и регистрацию, снизить нагрузку на поддержку, повысить конверсию
-          в регистрацию и собрать данные пользователя в едином профиле.
+          Создать единый аккаунт для всех сервисов, чтобы:
         </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            "Единый вход по телефону или email",
-            "Регистрация через OTP",
-            "Общий профиль пользователя",
-            "Единая логика ошибок и восстановления",
-          ].map((item) => (
-            <div
-              key={item}
-              className="rounded-2xl bg-white/10 p-4 text-base font-semibold leading-6 tracking-[-0.2px] text-white/84"
-            >
-              {item}
-            </div>
-          ))}
-        </div>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>упростить вход и регистрацию</li>
+          <li>снизить нагрузку на поддержку</li>
+          <li>повысить конверсию в регистрацию</li>
+          <li>обеспечить единый профиль пользователя</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Критерии успеха">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>снижение обращений в поддержку по входу</li>
+          <li>рост регистраций</li>
+          <li>подключение остальных продуктов к единому аккаунту</li>
+          <li>сокращение времени на поддержку</li>
+        </ul>
       </CaseSection>
 
       <CaseSection title="Моя роль">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          Я работал как продуктовый дизайнер и отвечал за полный цикл: помог
-          сформировать понимание задачи, провел дискавери и исследование,
-          сформулировал и приоритизировал гипотезы, спроектировал UX/UI,
-          согласовал решения с разработкой и вел авторский надзор до релиза.
+          Я работал как продуктовый дизайнер и отвечал за полный цикл:
         </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>формирование понимания задачи</li>
+          <li>дискавери и исследование</li>
+          <li>формирование и приоритизация гипотез</li>
+          <li>проектирование UX/UI</li>
+          <li>согласование с разработкой</li>
+          <li>авторский надзор до релиза</li>
+        </ul>
       </CaseSection>
 
       <CaseImageSlot label="Место для изображения: процесс работы, карта стейкхолдеров или структура проекта" />
 
       <CaseSection title="Исследование">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          Я проанализировал четыре продукта: изучил воронки входа и регистрации,
-          нашел точки, где пользователи чаще всего спотыкаются, и выявил
-          несоответствия в логике сценариев и UI.
+          Провёл анализ четырёх продуктов
         </p>
-        <ul className="grid gap-3 text-base font-normal leading-6 tracking-[-0.2px] text-white/76 sm:grid-cols-2">
-          {[
-            "лишние шаги в регистрации",
-            "непонятные статусы",
-            "дублирующие поля",
-            "разная логика восстановления доступа",
-          ].map((item) => (
-            <li key={item} className="rounded-2xl bg-white/8 p-4">
-              {item}
-            </li>
-          ))}
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>изучил воронки входа и регистрации</li>
+          <li>нашёл точки, где пользователи чаще всего «спотыкаются»</li>
+          <li>выявил несоответствия в логике и UI</li>
         </ul>
       </CaseSection>
 
-      <CaseSection title="Анализ аналогов и гипотезы">
+      <CaseSection title="Анализ аналогов">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          Я изучил лучшие практики Яндекс ID, ВК ID, Госуслуг, Skyeng и
-          Фоксфорда. Собрал паттерны по регистрации, восстановлению доступа,
-          двухфакторной аутентификации и управлению профилем.
+          Изучил лучшие практики:
         </p>
-        <div className="grid gap-3">
-          {[
-            "Единый аккаунт снизит количество обращений в поддержку.",
-            "Упрощенная регистрация через телефон/email и OTP повысит конверсию.",
-            "Единый профиль уменьшит ошибки при передаче данных между сервисами.",
-            "Двухфакторная аутентификация повысит доверие пользователей.",
-          ].map((item, index) => (
-            <div
-              key={item}
-              className="flex gap-4 rounded-2xl bg-white/10 p-4 text-base leading-6 tracking-[-0.2px] text-white/80"
-            >
-              <span className="font-semibold text-white/48">0{index + 1}</span>
-              <p>{item}</p>
-            </div>
-          ))}
-        </div>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>Яндекс ID</li>
+          <li>ВК ID</li>
+          <li>Госуслуги</li>
+          <li>Skyeng</li>
+          <li>Фоксфорд</li>
+        </ul>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Собрал паттерны по:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>регистрации</li>
+          <li>восстановлению доступа</li>
+          <li>двухфакторной аутентификации</li>
+          <li>управлению профилем</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Гипотезы">
+        <ol className="list-decimal space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>Единый аккаунт снизит количество обращений в поддержку</li>
+          <li>
+            Упрощённая регистрация (телефон/email + OTP) повысит конверсию
+          </li>
+          <li>
+            Единый профиль уменьшит количество ошибок при передаче данных между
+            сервисами
+          </li>
+          <li>Двухфакторная аутентификация повысит доверие пользователей</li>
+        </ol>
+      </CaseSection>
+
+      <CaseSection title="CJM">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Построил путь пользователя от входа до заполнения профиля.
+        </p>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Нашёл узкие места:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>лишние шаги</li>
+          <li>непонятные статусы</li>
+          <li>дублирующие поля</li>
+          <li>отсутствие единой логики</li>
+        </ul>
       </CaseSection>
 
       <CaseImageSlot label="Место для изображения: CJM, карта проблем или таблица анализа аналогов" />
 
-      <CaseSection title="Ключевые экраны">
-        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          В прототип вошли сценарии регистрации и входа, профиль пользователя,
-          двухфакторная аутентификация, удаление аккаунта по требованиям ИБ и
-          единая система ошибок с понятными текстами восстановления.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            "Вход по телефону или email, OTP-код и установка пароля",
-            "Имя, дата рождения, аватар и синхронизация между сервисами",
-            "Опциональная 2FA с двумя способами подтверждения входа",
-            "Удаление аккаунта по запросу со стиранием данных в течение 30 дней",
-          ].map((item) => (
-            <div
-              key={item}
-              className="rounded-2xl border border-white/10 bg-white/8 p-4 text-base font-normal leading-6 tracking-[-0.2px] text-white/76"
-            >
-              {item}
-            </div>
-          ))}
-        </div>
+      <CaseSection title="Экраны">
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Регистрация и вход
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>вход по телефону или email</li>
+          <li>OTP-код</li>
+          <li>установка пароля</li>
+          <li>единый аккаунт для всех сервисов</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Профиль пользователя
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>имя, дата рождения, аватар</li>
+          <li>единое хранилище данных</li>
+          <li>синхронизация между сервисами</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Двухфакторная аутентификация
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>опциональная</li>
+          <li>два способа подтверждения входа</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Удаление аккаунта
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>удаление по запросу</li>
+          <li>данные стираются в течение 30 дней (требования ИБ)</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Состояния ошибок
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>единая система ошибок</li>
+          <li>понятные тексты</li>
+          <li>сценарии восстановления</li>
+        </ul>
       </CaseSection>
 
       <CaseSection title="UX-тестирование">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
-          Мы протестировали прототипы на 12 респондентах: 6 родителях и 6
-          школьниках. Тестирование показало путаницу в шагах регистрации,
-          непонимание, зачем нужен пароль после OTP, и сложности с
-          подтверждением email. После этого мы улучшили последовательность
-          шагов, тексты, подсказки и визуальные статусы.
+          Провели тестирование прототипов на 12 респондентах:
         </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>6 родителей</li>
+          <li>6 школьников</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Что выявили:
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>путаница в шагах регистрации</li>
+          <li>непонимание, зачем нужен пароль после OTP</li>
+          <li>сложности с подтверждением email</li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Что улучшили:
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>последовательность шагов</li>
+          <li>тексты и подсказки</li>
+          <li>визуальные статусы</li>
+        </ul>
       </CaseSection>
 
       <CaseImageSlot label="Место для изображения: прототипы, экраны регистрации или результаты UX-тестирования" />
 
+    </div>
+  );
+}
+
+function HomePageCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <section className="mx-auto flex w-full max-w-[800px] flex-col gap-4">
+        <h2 className="text-[40px] font-semibold leading-[48px] tracking-[-1px]">
+          Главная страница
+        </h2>
+        <h3 className="text-2xl font-semibold leading-8 tracking-[-0.6px]">
+          Контекст
+        </h3>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Платформа позволяет репетиторам:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>проводить онлайн‑занятия</li>
+          <li>создавать и выдавать задания</li>
+          <li>проверять работы</li>
+          <li>отслеживать прогресс каждого ученика</li>
+        </ul>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Главная страница была перегружена, не помогала быстро переходить к
+          созданию контента и не стимулировала использование ИИ‑функциональности
+        </p>
+      </section>
+
       <CaseSection title="Результаты">
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            ["-28%", "обращений по входу"],
-            ["-35%", "повторных обращений"],
-            ["-18%", "времени обработки тикетов"],
-            ["62% → 74%", "рост конверсии в регистрацию"],
-          ].map(([value, label]) => (
-            <div key={label} className="rounded-[24px] bg-white p-5 text-black">
-              <p className="text-[32px] font-semibold leading-10 tracking-[-0.8px]">
-                {value}
-              </p>
-              <p className="mt-1 text-base font-semibold leading-6 tracking-[-0.2px] text-black/64">
-                {label}
-              </p>
-            </div>
-          ))}
-        </div>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Сравнивались два периода: 12.12–20.12 (до релиза) vs 12.01–20.01
+          (после релиза)
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>доля использований ИИ: +72%</li>
+          <li>созданных заданий на преподавателя: +45%</li>
+          <li>конверсия учителей в ИИ‑чаты: +175%</li>
+          <li>конверсия в ИИ‑генерацию заданий: +51%</li>
+        </ul>
       </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: обложка кейса или главный экран платформы" />
+
+      <CaseSection title="Задачи продукта">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>сократить количество кликов до целевого действия</li>
+          <li>
+            объединить библиотеку и главную страницу в единый рабочий центр
+          </li>
+          <li>повысить использование ИИ‑функционала</li>
+          <li>увеличить количество создаваемых заданий</li>
+          <li>улучшить конверсию в выдачу заданий ученикам</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Моя роль">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          Я отвечал за:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>анализ пользовательских сценариев</li>
+          <li>формирование гипотез</li>
+          <li>проектирование UX главной страницы</li>
+          <li>интеграцию ИИ‑функций в ключевые точки</li>
+          <li>согласование с продуктом и разработкой</li>
+          <li>авторский надзор после релиза</li>
+        </ul>
+      </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: структура главной страницы или пользовательские сценарии" />
+
+      <CaseSection title="Исследование">
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Что обнаружили:
+        </h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>
+            пользователи тратят слишком много времени, чтобы добраться до
+            создания задания
+          </li>
+          <li>ИИ‑функции были «спрятаны» и использовались редко</li>
+          <li>библиотека и главная дублировали функции</li>
+          <li>
+            репетиторы часто создают задания, но не всегда доходят до выдачи
+            ученикам
+          </li>
+        </ul>
+        <h4 className="text-xl font-semibold leading-7 tracking-[-0.4px]">
+          Гипотезы:
+        </h4>
+        <ol className="list-decimal space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] text-white/76">
+          <li>
+            Если вынести ИИ‑создание контента на первый экран — вырастет
+            использование ИИ
+          </li>
+          <li>
+            Если объединить библиотеку и главную — сократится путь до целевого
+            действия
+          </li>
+          <li>
+            Если показать недавние материалы и быстрые действия — увеличится
+            количество создаваемых заданий
+          </li>
+        </ol>
+      </CaseSection>
+
+      <CaseImageSlot label="Место для изображения: прототип, новая главная или ИИ-блоки" />
     </div>
   );
 }
@@ -520,7 +673,9 @@ function CaseWindow({
         </div>
       </header>
 
-      {caseId === "profile" ? (
+      {caseId === "home" ? (
+        <HomePageCase />
+      ) : caseId === "profile" ? (
         <UnifiedProfileCase />
       ) : (
         <CasePlaceholder title={title} />
@@ -877,7 +1032,7 @@ export default function Home() {
         }}
       >
         <source
-          src="/stars-sky-constellation-4k-live-wallpaper.webm"
+          src="/wall-2.webm"
           type="video/webm"
         />
       </video>
