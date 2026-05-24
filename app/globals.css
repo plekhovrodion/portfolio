@@ -204,6 +204,8 @@ html {
   .desktop-header {
     position: absolute;
     z-index: 40;
+    font-size: 14px;
+    line-height: 18px;
   }
 
   .profile-card {
@@ -212,6 +214,17 @@ html {
     width: 100%;
     max-width: 520px;
     cursor: default;
+  }
+
+  .profile-card h1 {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .profile-card p,
+  .desktop-file p {
+    font-size: 14px;
+    line-height: 20px;
   }
 
   .desktop-files {
@@ -232,6 +245,26 @@ html {
   .desktop-file-icon {
     margin-inline: auto;
     padding: 10px;
+  }
+
+  .case-window h2 {
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  .case-window h3 {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .case-window p:first-of-type {
+    font-size: 18px;
+    line-height: 24px;
+  }
+
+  .case-window p:last-of-type {
+    font-size: 14px;
+    line-height: 20px;
   }
 }
 
