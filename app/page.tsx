@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Info, Music, Pause } from "lucide-react";
-import type { CSSProperties, PointerEvent } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 
 type DesktopFile = {
@@ -56,6 +56,8 @@ const CARD_HEIGHT = 248;
 const CASE_WINDOW_WIDTH = 936;
 const CASE_WINDOW_HEIGHT = 780;
 const CASE_WINDOW_ANIMATION_MS = 220;
+const MOBILE_LAYOUT_BREAKPOINT = 900;
+const NARROW_MOBILE_BREAKPOINT = 520;
 const MUSIC_BACKGROUND_VIDEO = "/dancing-rat-chess-type-beat.webm";
 
 const desktopFiles: DesktopFile[] = [
@@ -99,6 +101,33 @@ function getResponsivePosition(
   };
 }
 
+function getMobileFilePosition(index: number, stageSize: StageSize) {
+  const isNarrow = stageSize.width <= NARROW_MOBILE_BREAKPOINT;
+  const sidePadding = isNarrow ? 8 : 14;
+  const columns = isNarrow ? 2 : 3;
+  const rowGap = isNarrow ? 146 : 150;
+  const availableWidth = stageSize.width - sidePadding * 2;
+  const cellWidth = availableWidth / columns;
+  const column = index % columns;
+  const row = Math.floor(index / columns);
+  const x = sidePadding + column * cellWidth + (cellWidth - FILE_WIDTH) / 2;
+  const y = HEADER_HEIGHT + (isNarrow ? 292 : 284) + row * rowGap;
+
+  return {
+    x: clamp(x, 0, Math.max(0, stageSize.width - FILE_WIDTH)),
+    y,
+  };
+}
+
+function getMobileCardPosition(stageSize: StageSize) {
+  const sidePadding = stageSize.width <= NARROW_MOBILE_BREAKPOINT ? 8 : 14;
+
+  return {
+    x: sidePadding,
+    y: HEADER_HEIGHT + 8,
+  };
+}
+
 function DesktopFileIcon({
   file,
   isDragging,
@@ -109,7 +138,7 @@ function DesktopFileIcon({
   isDragging: boolean;
   index: number;
   onDragStart: (
-    event: PointerEvent<HTMLButtonElement>,
+    event: ReactPointerEvent<HTMLButtonElement>,
     target: DragTarget,
     position: Position,
     elementSize?: StageSize,
@@ -164,7 +193,7 @@ function CaseWindow({
   onMinimize: () => void;
   onToggleMaximize: () => void;
   onDragStart: (
-    event: PointerEvent<HTMLElement>,
+    event: ReactPointerEvent<HTMLElement>,
     target: DragTarget,
     position: Position,
     elementSize?: StageSize,
@@ -292,12 +321,14 @@ export default function Home() {
   const stageRef = useRef<HTMLElement>(null);
   const musicVideoRef = useRef<HTMLVideoElement>(null);
   const dragMovedRef = useRef(false);
+  const dragStateRef = useRef<DragState | null>(null);
   const closeWindowTimeoutRef = useRef<number | null>(null);
   const [files, setFiles] = useState(desktopFiles);
   const [stageSize, setStageSize] = useState<StageSize>({
     width: STAGE_WIDTH,
     height: STAGE_HEIGHT,
   });
+  const stageSizeRef = useRef<StageSize>(stageSize);
   const [cardPosition, setCardPosition] = useState<Position>({
     x: 560,
     y: 352,
@@ -314,6 +345,10 @@ export default function Home() {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
   useEffect(() => {
+    stageSizeRef.current = stageSize;
+  }, [stageSize]);
+
+  useEffect(() => {
     const stage = stageRef.current;
 
     if (!stage) {
@@ -328,6 +363,22 @@ export default function Home() {
       };
 
       setStageSize(nextStageSize);
+
+      if (nextStageSize.width <= MOBILE_LAYOUT_BREAKPOINT) {
+        setFiles(
+          desktopFiles.map((file, index) => ({
+            ...file,
+            ...getMobileFilePosition(index, nextStageSize),
+          })),
+        );
+        setCardPosition(getMobileCardPosition(nextStageSize));
+        setCaseWindowPosition({
+          x: 0,
+          y: HEADER_HEIGHT,
+        });
+        return;
+      }
+
       setFiles(
         desktopFiles.map((file) => ({
           ...file,
@@ -375,6 +426,33 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    function handleWindowPointerMove(event: globalThis.PointerEvent) {
+      if (!dragStateRef.current) {
+        return;
+      }
+
+      event.preventDefault();
+      moveDrag(event.clientX, event.clientY);
+    }
+
+    function handleWindowPointerEnd() {
+      stopDrag();
+    }
+
+    window.addEventListener("pointermove", handleWindowPointerMove, {
+      passive: false,
+    });
+    window.addEventListener("pointerup", handleWindowPointerEnd);
+    window.addEventListener("pointercancel", handleWindowPointerEnd);
+
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      window.removeEventListener("pointerup", handleWindowPointerEnd);
+      window.removeEventListener("pointercancel", handleWindowPointerEnd);
+    };
+  });
+
+  useEffect(() => {
     return () => {
       if (closeWindowTimeoutRef.current) {
         window.clearTimeout(closeWindowTimeoutRef.current);
@@ -396,7 +474,7 @@ export default function Home() {
     };
   }, []);
 
-  function getStagePoint(event: PointerEvent<HTMLElement>) {
+  function getStagePoint(clientX: number, clientY: number) {
     const stage = stageRef.current;
 
     if (!stage) {
@@ -406,28 +484,24 @@ export default function Home() {
     const rect = stage.getBoundingClientRect();
 
     return {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
   }
 
   function startDrag(
-    event: PointerEvent<HTMLElement>,
+    event: ReactPointerEvent<HTMLElement>,
     target: DragTarget,
     position: Position,
     elementSize?: StageSize,
   ) {
-    if (event.button !== 0) {
+    if (event.pointerType === "mouse" && event.button !== 0) {
       return;
     }
 
-    const point = getStagePoint(event);
+    const point = getStagePoint(event.clientX, event.clientY);
     const rect = event.currentTarget.getBoundingClientRect();
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragMovedRef.current = false;
-    setDragState({
+    const nextDragState = {
       target,
       offsetX: point.x - position.x,
       offsetY: point.y - position.y,
@@ -436,36 +510,50 @@ export default function Home() {
       width: elementSize?.width ?? rect.width,
       height: elementSize?.height ?? rect.height,
       hasMoved: false,
-    });
+    };
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragMovedRef.current = false;
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
   }
 
-  function moveDrag(event: PointerEvent<HTMLElement>) {
-    if (!dragState) {
+  function moveDrag(clientX: number, clientY: number) {
+    const currentDragState = dragStateRef.current;
+
+    if (!currentDragState) {
       return;
     }
 
-    const point = getStagePoint(event);
+    const point = getStagePoint(clientX, clientY);
     const hasMoved =
-      dragState.hasMoved ||
-      Math.hypot(point.x - dragState.startX, point.y - dragState.startY) > 4;
+      currentDragState.hasMoved ||
+      Math.hypot(
+        point.x - currentDragState.startX,
+        point.y - currentDragState.startY,
+      ) > 4;
     dragMovedRef.current = hasMoved;
+    const currentStageSize = stageSizeRef.current;
     const nextPosition = {
       x: clamp(
-        point.x - dragState.offsetX,
+        point.x - currentDragState.offsetX,
         0,
-        Math.max(0, stageSize.width - dragState.width),
+        Math.max(0, currentStageSize.width - currentDragState.width),
       ),
       y: clamp(
-        point.y - dragState.offsetY,
+        point.y - currentDragState.offsetY,
         HEADER_HEIGHT,
-        Math.max(HEADER_HEIGHT, stageSize.height - dragState.height),
+        Math.max(HEADER_HEIGHT, currentStageSize.height - currentDragState.height),
       ),
     };
+    const nextDragState = { ...currentDragState, hasMoved };
 
-    setDragState({ ...dragState, hasMoved });
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
 
-    if (dragState.target.type === "file") {
-      const draggedFileId = dragState.target.id;
+    if (currentDragState.target.type === "file") {
+      const draggedFileId = currentDragState.target.id;
 
       setFiles((currentFiles) =>
         currentFiles.map((file) =>
@@ -475,7 +563,7 @@ export default function Home() {
       return;
     }
 
-    if (dragState.target.type === "case-window") {
+    if (currentDragState.target.type === "case-window") {
       setCaseWindowPosition(nextPosition);
       return;
     }
@@ -483,21 +571,28 @@ export default function Home() {
     setCardPosition(nextPosition);
   }
 
+  function handleStagePointerMove(event: ReactPointerEvent<HTMLElement>) {
+    moveDrag(event.clientX, event.clientY);
+  }
+
   function stopDrag() {
+    const currentDragState = dragStateRef.current;
+
     if (
-      dragState?.target.type === "file" &&
+      currentDragState?.target.type === "file" &&
       !dragMovedRef.current &&
-      activeCaseId !== dragState.target.id
+      activeCaseId !== currentDragState.target.id
     ) {
       if (closeWindowTimeoutRef.current) {
         window.clearTimeout(closeWindowTimeoutRef.current);
       }
       setIsCaseWindowClosing(false);
       setIsCaseWindowMaximized(false);
-      setActiveCaseId(dragState.target.id);
+      setActiveCaseId(currentDragState.target.id);
     }
 
     dragMovedRef.current = false;
+    dragStateRef.current = null;
     setDragState(null);
   }
 
@@ -576,7 +671,7 @@ export default function Home() {
         ref={stageRef}
         aria-label="Портфолио Родиона Плехова"
         className="figma-stage relative h-full w-full shrink-0 overflow-hidden"
-        onPointerMove={moveDrag}
+        onPointerMove={handleStagePointerMove}
         onPointerUp={stopDrag}
         onPointerCancel={stopDrag}
       >
@@ -666,13 +761,13 @@ export default function Home() {
             startDrag(event, { type: "card" }, cardPosition)
           }
         >
-          <div className="relative size-16 overflow-hidden rounded-full bg-white">
+          <div className="relative size-14 overflow-hidden rounded-full bg-white">
             <Image
               src="/figma-profile-avatar.png"
               alt=""
               fill
               priority
-              sizes="64px"
+              sizes="56px"
               className="object-cover"
             />
           </div>
