@@ -650,7 +650,10 @@ export default function Home() {
         muted
         playsInline
       >
-        <source src="/238264.webm" type="video/webm" />
+        <source
+          src="/stars-sky-constellation-4k-live-wallpaper.webm"
+          type="video/webm"
+        />
       </video>
       <video
         ref={musicVideoRef}
