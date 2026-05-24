@@ -192,13 +192,9 @@ html {
   }
 
   .figma-stage {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
     width: 100%;
     height: 100%;
     overflow: hidden;
-    padding: 64px 14px 20px;
   }
 
   .desktop-header {
@@ -209,11 +205,10 @@ html {
   }
 
   .profile-card {
-    position: static;
-    order: 1;
-    width: 100%;
+    position: absolute;
+    width: calc(100% - 28px);
     max-width: 520px;
-    cursor: default;
+    cursor: grab;
   }
 
   .profile-card h1 {
@@ -228,18 +223,13 @@ html {
   }
 
   .desktop-files {
-    order: 2;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px 10px;
-    width: 100%;
-    max-width: 560px;
+    display: block;
   }
 
   .desktop-file {
-    position: static;
-    width: 100%;
-    cursor: pointer;
+    position: absolute;
+    width: 128px;
+    cursor: grab;
   }
 
   .desktop-file-icon {
@@ -272,8 +262,6 @@ html {
   .figma-stage {
     width: 100%;
     height: 100%;
-    gap: 18px;
-    padding: 58px 8px 16px;
   }
 
   .desktop-header {
@@ -288,11 +276,11 @@ html {
   .profile-card {
     border-radius: 28px;
     padding: 20px;
+    width: calc(100% - 16px);
   }
 
   .desktop-files {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px 8px;
+    display: block;
   }
 
   .desktop-file-icon {
