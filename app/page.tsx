@@ -15,7 +15,7 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 type DesktopFile = {
@@ -77,15 +77,22 @@ const MUSIC_BACKGROUND_VIDEO = "/dancing-rat-chess-type-beat.webm";
 
 const caseExternalLinks: Record<string, string> = {
   "assistant-promo": "https://edu-assist.me/promo",
+  home: "https://edu-assist.ru/",
 };
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
+  home: "/cases/main/video.png",
+  classes: "/cases/statistic/metrics-overview.png",
   profile: "/cases/profile/login-desktop.png",
+  "ai-assistant": "/cases/ai/home-desktop.png",
 };
 
 const caseWindowTitles: Record<string, string> = {
   "about-me": "Обо мне",
   motion: "Моушн",
+  home: "Главная страница Лаборатории заданий",
+  classes: "Статистика занятий",
+  "ai-assistant": "ИИ-помощник в Лаборатории заданий",
 };
 
 const aboutMeHighlights = [
@@ -109,6 +116,7 @@ const aboutMeHighlights = [
 const desktopFiles: DesktopFile[] = [
   { id: "home", label: "Главная", x: 289, y: 154 },
   { id: "classes", label: "Статистика занятий", x: 804, y: 190 },
+  { id: "ai-assistant", label: "ИИ-помощник", x: 548, y: 480 },
   { id: "subscription", label: "Подписка", x: 261, y: 584 },
   { id: "vk-cart", label: "Корзина", x: 613, y: 831 },
   { id: "profile", label: "Профиль", x: 1087, y: 716 },
@@ -241,16 +249,6 @@ function DesktopFileIcon({
   );
 }
 
-function CaseImageSlot({ label }: { label: string }) {
-  return (
-    <div
-      aria-label={label}
-      className="aspect-video shrink-0 rounded-2xl bg-white/10"
-      role="img"
-    />
-  );
-}
-
 function CaseVideo({
   src,
   title,
@@ -302,11 +300,18 @@ function CaseMotionVideo({
     <video
       ref={videoRef}
       className={className}
+      src={src}
       autoPlay
       loop
       muted
       playsInline
       preload="auto"
+      onLoadedData={(event) => {
+        event.currentTarget.muted = true;
+        void event.currentTarget.play().catch(() => {
+          // Keep the preview poster/background visible if autoplay is blocked.
+        });
+      }}
     >
       <source src={src} type={mimeType} />
     </video>
@@ -328,7 +333,11 @@ const motionPromoVideo: MotionVideo = {
 const motionGridVideos: MotionVideo[] = [
   { src: "/motion/landing-student-ai-mentor.webm", title: "ИИ-наставник для ученика" },
   { src: "/motion/landing-student-ai-career.webm", title: "ИИ-профориентолог" },
-  { src: "/motion/landing-hero.webm", title: "Hero-блок лендинга" },
+  {
+    src: "/motion/landing-hero.mp4",
+    title: "Hero-блок лендинга",
+    mimeType: "video/mp4",
+  },
   { src: "/motion/landing-student-ai-tutor.webm", title: "ИИ-репетитор" },
   {
     src: "/motion/landing-teacher-personalized.webm",
@@ -372,6 +381,7 @@ function CaseVideoLightbox({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.stopImmediatePropagation();
         onClose();
       }
     }
@@ -723,6 +733,173 @@ const profileGalleryImages: CaseImage[] = [
   ...profileErrorImages,
 ];
 
+const mainPageCoverImage = [
+  {
+    src: "/cases/main/video.png",
+    alt: "Главная страница Лаборатории заданий — hero-блок",
+    width: 2048,
+    height: 1200,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const mainPageMobileScreens = [
+  {
+    src: "/cases/main/screen-1.png",
+    alt: "Главная страница — мобильная версия, экран 1",
+    width: 640,
+    height: 1400,
+  },
+  {
+    src: "/cases/main/screen-2.png",
+    alt: "Главная страница — мобильная версия, экран 2",
+    width: 640,
+    height: 1400,
+  },
+  {
+    src: "/cases/main/screen-3.png",
+    alt: "Главная страница — мобильная версия, экран 3",
+    width: 640,
+    height: 1400,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const mainPageDesktopScreens = [
+  {
+    src: "/cases/main/video-1.png",
+    alt: "Блок «Удобно учить, по‑своему учиться»",
+    width: 2048,
+    height: 1200,
+  },
+  {
+    src: "/cases/main/video-4.png",
+    alt: "Блок «Здесь технологии помогают и поддерживают»",
+    width: 2048,
+    height: 1200,
+  },
+  {
+    src: "/cases/main/video-2.png",
+    alt: "Блок «Классные возможности для всех» — педагогу",
+    width: 2048,
+    height: 1200,
+  },
+  {
+    src: "/cases/main/video-3.png",
+    alt: "Блок «Классные возможности для всех» — ученику",
+    width: 2048,
+    height: 1200,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const statisticIntroImage = [
+  {
+    src: "/cases/statistic/metrics-overview.png",
+    alt: "Страница статистики — динамика метрик",
+    width: 3456,
+    height: 3184,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const aiIntroImage = [
+  {
+    src: "/cases/ai/home-desktop.png",
+    alt: "Главный экран — веб",
+    width: 3456,
+    height: 2048,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const aiMobileScreens = [
+  {
+    src: "/cases/ai/home-mobile.png",
+    alt: "Главный экран — мобильная версия",
+    width: 720,
+    height: 1688,
+  },
+  {
+    src: "/cases/ai/compose-mobile.png",
+    alt: "Ввод запроса и выбор сценария",
+    width: 720,
+    height: 1688,
+  },
+  {
+    src: "/cases/ai/history-mobile.png",
+    alt: "История чатов",
+    width: 720,
+    height: 1688,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const aiDesktopScreens = [
+  {
+    src: "/cases/ai/lesson-planning-desktop.png",
+    alt: "Планирование занятий",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/ai/chat-desktop.png",
+    alt: "Чат с математической клавиатурой",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/ai/math-keyboard-spec.png",
+    alt: "Математическая клавиатура — спецификация",
+    width: 3476,
+    height: 1756,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const statisticScreens = [
+  {
+    src: "/cases/statistic/filters.png",
+    alt: "Фильтры — предмет, класс и период",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/statistic/statistics-screen.png",
+    alt: "Страница статистики — обзор метрик",
+    width: 2712,
+    height: 1510,
+  },
+  {
+    src: "/cases/statistic/period-comparison.png",
+    alt: "Сравнение показателей за период",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/statistic/conversation-distribution.png",
+    alt: "Распределение разговора на уроке",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/statistic/emotional-modality.png",
+    alt: "Эмоциональная модальность",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/statistic/empty-state.png",
+    alt: "Пустое состояние — нет данных за период",
+    width: 3456,
+    height: 2048,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const homeIntroImage = [
+  {
+    src: "/cases/main/video.png",
+    alt: "Главная страница Лаборатории заданий — hero-блок",
+    width: 2048,
+    height: 1200,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
 function CaseImageLightbox({
   image,
   isClosing,
@@ -735,6 +912,7 @@ function CaseImageLightbox({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.stopImmediatePropagation();
         onClose();
       }
     }
@@ -894,9 +1072,6 @@ function CaseSection({
   );
 }
 
-const caseLinkClassName =
-  "rounded-sm underline decoration-white/35 underline-offset-2 transition hover:text-white/80 hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
-
 const aboutMeContactButtonClassName =
   "inline-flex items-center justify-center rounded-full bg-white/10 px-5 py-2.5 text-base font-semibold leading-6 tracking-[-0.2px] text-[#fafafa] transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
 
@@ -906,7 +1081,7 @@ function AboutMeCase() {
       <section className="case-section mx-auto flex w-full flex-col gap-4">
         <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-white">
           <Image
-            src="/figma-profile-avatar.png"
+            src="/figma-profile-avatar.jpeg"
             alt=""
             fill
             sizes="80px"
@@ -1117,8 +1292,10 @@ function UnifiedProfileCase() {
 function HomePageCase() {
   return (
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseImageGrid images={homeIntroImage} />
+
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Главная страница</h1>
+        <h1>Главная страница Лаборатории заданий</h1>
         <h2>Контекст</h2>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Платформа позволяет репетиторам:
@@ -1148,7 +1325,7 @@ function HomePageCase() {
         </ul>
       </CaseSection>
 
-      <CaseImageSlot label="Место для изображения: обложка кейса или главный экран платформы" />
+      <CaseImageGrid images={mainPageCoverImage} />
 
       <CaseSection title="Задачи продукта">
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -1176,7 +1353,7 @@ function HomePageCase() {
         </ul>
       </CaseSection>
 
-      <CaseImageSlot label="Место для изображения: структура главной страницы или пользовательские сценарии" />
+      <CaseImageGrid images={mainPageMobileScreens} />
 
       <CaseSection title="Исследование">
         <h4>Что обнаружили:</h4>
@@ -1209,7 +1386,146 @@ function HomePageCase() {
         </ol>
       </CaseSection>
 
-      <CaseImageSlot label="Место для изображения: прототип, новая главная или ИИ-блоки" />
+      <CaseImageGrid images={mainPageDesktopScreens} />
+    </div>
+  );
+}
+
+function AiAssistantCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseImageGrid images={aiIntroImage} />
+
+      <section className="case-section mx-auto flex w-full flex-col gap-4">
+        <h1>ИИ-помощник в Лаборатории заданий</h1>
+      </section>
+
+      <CaseSection title="Задача">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Спроектировать ИИ-помощника для ученика и учителя: сценарии,
+          ветки диалога и интерфейс чата под разные запросы.
+        </p>
+      </CaseSection>
+
+      <CaseSection title="Результаты">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>20 600 чатов</li>
+          <li>5,9 сообщений на диалог</li>
+          <li>~3 минуты в чате</li>
+          <li>аудитория +28%</li>
+        </ul>
+      </CaseSection>
+
+      <CaseImageGrid images={aiMobileScreens} />
+
+      <CaseImageGrid images={aiDesktopScreens} />
+    </div>
+  );
+}
+
+function ClassesStatisticsCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseImageGrid images={statisticIntroImage} />
+
+      <section className="case-section mx-auto flex w-full flex-col gap-4">
+        <h1>Статистика занятий</h1>
+        <h2>Контекст</h2>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Ассистент преподавателя анализирует уроки и даёт:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>динамику метрик,</li>
+          <li>рекомендации по улучшению,</li>
+          <li>распознавание эмоций,</li>
+          <li>речевую аналитику.</li>
+        </ul>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Но преподаватели не могли{" "}
+          <strong className="font-semibold text-white/92">
+            посмотреть, как меняются их показатели со временем
+          </strong>
+          , и не понимали, улучшается ли их преподавание.
+        </p>
+      </section>
+
+      <CaseSection title="Проблема">
+        <blockquote className="case-lead border-l-2 border-white/30 pl-4 text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
+          Преподаватель не может увидеть, как меняются его метрики и приёмы
+          преподавания в динамике.
+        </blockquote>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Пользователи:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>не понимают, что означает каждая метрика,</li>
+          <li>путаются в периодах сравнения,</li>
+          <li>не могут выбрать предмет или параллель,</li>
+          <li>не могут сравнить уроки между собой.</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Цель">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Создать функциональность, которая позволит преподавателю{" "}
+          <strong className="font-semibold text-white/92">
+            анализировать динамику метрик по загруженным урокам
+          </strong>
+          , понимать прогресс и корректировать методы преподавания.
+        </p>
+      </CaseSection>
+
+      <CaseSection title="JTBD (MVP)">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>
+            <strong className="font-semibold text-white/92">
+              Я хочу видеть изменения ключевых метрик
+            </strong>
+            , чтобы понимать, как мои методы преподавания влияют на процесс
+            обучения.
+          </li>
+          <li>
+            <strong className="font-semibold text-white/92">
+              Я хочу фильтровать предметы и параллели
+            </strong>
+            , чтобы понимать, где у меня проседают результаты.
+          </li>
+          <li>
+            <strong className="font-semibold text-white/92">
+              Я хочу выбирать свои периоды анализа
+            </strong>
+            , чтобы выявлять слабые места и корректировать стиль преподавания.
+          </li>
+        </ul>
+      </CaseSection>
+
+      <CaseImageGrid images={statisticScreens} />
+
+      <CaseSection title="UX‑исследование">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Провели интервью и тестирование с преподавателями.
+        </p>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <strong className="font-semibold text-white/92">Что узнали:</strong>
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>пользователям нравится идея динамики метрик;</li>
+          <li>им интересно видеть прогресс;</li>
+          <li>
+            но они <strong className="font-semibold text-white/92">путаются в интерпретации показателей</strong>;
+          </li>
+          <li>
+            не понимают, что сравнивается: среднее? последний урок? период?;
+          </li>
+          <li>
+            хотят сравнивать <strong className="font-semibold text-white/92">последний урок с предыдущим</strong>;
+          </li>
+          <li>
+            хотят видеть <strong className="font-semibold text-white/92">только важные метрики</strong>, а не всё
+            подряд.
+          </li>
+        </ul>
+      </CaseSection>
     </div>
   );
 }
@@ -1419,6 +1735,10 @@ function CaseWindow({
         <AssistantPromoCase />
       ) : caseId === "motion" ? (
         <MotionCase />
+      ) : caseId === "classes" ? (
+        <ClassesStatisticsCase />
+      ) : caseId === "ai-assistant" ? (
+        <AiAssistantCase />
       ) : (
         <CasePlaceholder title={title} />
       )}
@@ -1725,7 +2045,7 @@ export default function Home() {
     setActiveCaseId(caseId);
   }
 
-  function hideCaseWindow() {
+  const hideCaseWindow = useCallback(() => {
     if (!activeCaseId || isCaseWindowClosing) {
       return;
     }
@@ -1737,7 +2057,25 @@ export default function Home() {
       setIsCaseWindowMaximized(false);
       closeWindowTimeoutRef.current = null;
     }, CASE_WINDOW_ANIMATION_MS);
-  }
+  }, [activeCaseId, isCaseWindowClosing]);
+
+  useEffect(() => {
+    if (!activeCaseId) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        hideCaseWindow();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeCaseId, hideCaseWindow]);
 
   function getCaseWindowTitle(caseId: string) {
     return (
@@ -1924,7 +2262,7 @@ export default function Home() {
 
           <div className="relative size-14 overflow-hidden rounded-full bg-white">
             <Image
-              src="/figma-profile-avatar.png"
+              src="/figma-profile-avatar.jpeg"
               alt=""
               fill
               priority

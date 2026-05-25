@@ -162,6 +162,10 @@ html {
   object-fit: contain;
 }
 
+.case-intro-video.case-zoomable-video {
+  width: 100%;
+}
+
 .case-image-grid {
   gap: var(--case-image-gap);
 }
