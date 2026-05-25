@@ -2753,21 +2753,29 @@ export default function Home() {
             startDrag(event, { type: "card" }, cardPosition)
           }
         >
-          <button
-            type="button"
-            aria-label="Подробнее обо мне"
-            className="profile-card-expand absolute right-4 top-4 grid size-8 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={() => showCaseWindow("about-me")}
-          >
-            <Maximize2
-              aria-hidden="true"
-              className="size-4"
-              strokeWidth={2.2}
-            />
-          </button>
+          <div className="profile-card-toolbar absolute right-4 top-4 flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="status-dot size-3 shrink-0 rounded-full bg-[#34c759]" />
+              <p className="whitespace-nowrap text-[14px] font-normal leading-5 tracking-[-0.2px]">
+                Открыт для работы
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Подробнее обо мне"
+              className="profile-card-expand grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => showCaseWindow("about-me")}
+            >
+              <Maximize2
+                aria-hidden="true"
+                className="size-4"
+                strokeWidth={2.2}
+              />
+            </button>
+          </div>
 
-          <div className="relative size-14 overflow-hidden rounded-full bg-white">
+          <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white">
             <Image
               src="/figma-profile-avatar.jpeg"
               alt="Родион Плехов"
@@ -2792,13 +2800,6 @@ export default function Home() {
                 СберОбразовании
               </a>
               . Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="status-dot size-3 rounded-full bg-[#34c759]" />
-            <p className="text-base font-normal leading-6 tracking-[-0.2px]">
-              Открыт для работы
             </p>
           </div>
         </article>
