@@ -75,9 +75,13 @@ const NARROW_MOBILE_BREAKPOINT = 520;
 const MOBILE_FILE_COLUMNS = 3;
 const MUSIC_BACKGROUND_VIDEO = "/dancing-rat-chess-type-beat.webm";
 
+const vkCartFigmaPrototype =
+  "https://www.figma.com/proto/1C93yxYA4hkGBogyImvYgE/%D0%A2%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5-VK-%D0%9C%D0%B0%D1%80%D0%BA%D0%B5%D1%82-%D0%9A%D0%BE%D1%80%D0%B7%D0%B8%D0%BD%D0%B0-%C2%B7-%D0%9F%D0%BB%D0%B5%D1%85%D0%BE%D0%B2-%D0%A0%D0%BE%D0%B4%D0%B8%D0%BE%D0%BD?node-id=2-8527&viewport=-7125%2C68%2C0.66&scaling=scale-down&starting-point-node-id=2%3A8527&show-proto-sidebar=1&page-id=0%3A1";
+
 const caseExternalLinks: Record<string, string> = {
   "assistant-promo": "https://edu-assist.me/promo",
   home: "https://edu-assist.ru/",
+  "vk-cart": vkCartFigmaPrototype,
 };
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
@@ -85,6 +89,8 @@ const desktopFilePreviews: Partial<Record<string, string>> = {
   classes: "/cases/statistic/metrics-overview.png",
   profile: "/cases/profile/login-desktop.png",
   "ai-assistant": "/cases/ai/home-desktop.png",
+  subscription: "/cases/subscribe/Тарифы.png",
+  "vk-cart": "/cases/cart/cover.png",
 };
 
 const caseWindowTitles: Record<string, string> = {
@@ -93,6 +99,8 @@ const caseWindowTitles: Record<string, string> = {
   home: "Главная страница Лаборатории заданий",
   classes: "Статистика занятий",
   "ai-assistant": "ИИ-помощник в Лаборатории заданий",
+  subscription: "Тарифы в Лаборатории заданий",
+  "vk-cart": "Тестовое задание VK Маркет · Корзина",
 };
 
 const aboutMeHighlights = [
@@ -117,10 +125,9 @@ const desktopFiles: DesktopFile[] = [
   { id: "home", label: "Главная", x: 289, y: 154 },
   { id: "classes", label: "Статистика занятий", x: 804, y: 190 },
   { id: "ai-assistant", label: "ИИ-помощник", x: 548, y: 480 },
-  { id: "subscription", label: "Подписка", x: 261, y: 584 },
+  { id: "subscription", label: "Тарифы", x: 261, y: 584 },
   { id: "vk-cart", label: "Корзина", x: 613, y: 831 },
   { id: "profile", label: "Профиль", x: 1087, y: 716 },
-  { id: "tasks", label: "Проверка заданий", x: 1294, y: 328 },
   { id: "motion", label: "Моушн", x: 437, y: 328, variant: "folder" },
 ];
 
@@ -180,6 +187,138 @@ function getMobileCardPosition(stageSize: StageSize) {
     x: sidePadding,
     y: HEADER_HEIGHT + 8,
   };
+}
+
+const DESKTOP_STAGE_PADDING = 40;
+
+const desktopFileOrbitOffsets: Record<string, Position> = {
+  home: { x: -460, y: -320 },
+  classes: { x: 48, y: -380 },
+  "ai-assistant": { x: 480, y: -300 },
+  profile: { x: 560, y: 70 },
+  "vk-cart": { x: 440, y: 360 },
+  subscription: { x: -72, y: 420 },
+  motion: { x: -540, y: 100 },
+};
+
+const DESKTOP_FILE_CLEARANCE = 56;
+
+function getDesktopCardPosition(stageSize: StageSize): Position {
+  const cardWidth = Math.min(
+    CARD_WIDTH,
+    stageSize.width - DESKTOP_STAGE_PADDING * 2,
+  );
+  const usableHeight = stageSize.height - HEADER_HEIGHT - 24;
+
+  return {
+    x: Math.max(DESKTOP_STAGE_PADDING, (stageSize.width - cardWidth) / 2),
+    y: HEADER_HEIGHT + Math.max(16, (usableHeight - CARD_HEIGHT) / 2),
+  };
+}
+
+function clampDesktopFilePosition(position: Position, stageSize: StageSize) {
+  const padding = 16;
+  const minY = HEADER_HEIGHT + 8;
+  const maxX = Math.max(padding, stageSize.width - FILE_WIDTH - padding);
+  const maxY = Math.max(minY, stageSize.height - FILE_HEIGHT - padding);
+
+  return {
+    x: clamp(position.x, padding, maxX),
+    y: clamp(position.y, minY, maxY),
+  };
+}
+
+function resolveFilePositionAvoidingCard(
+  position: Position,
+  cardBounds: { left: number; top: number; right: number; bottom: number },
+  cardCenter: Position,
+  stageSize: StageSize,
+) {
+  const iconBounds = {
+    left: position.x,
+    top: position.y,
+    right: position.x + FILE_WIDTH,
+    bottom: position.y + FILE_HEIGHT,
+  };
+
+  const intersectsCard =
+    iconBounds.left < cardBounds.right + DESKTOP_FILE_CLEARANCE &&
+    iconBounds.right > cardBounds.left - DESKTOP_FILE_CLEARANCE &&
+    iconBounds.top < cardBounds.bottom + DESKTOP_FILE_CLEARANCE &&
+    iconBounds.bottom > cardBounds.top - DESKTOP_FILE_CLEARANCE;
+
+  if (!intersectsCard) {
+    return clampDesktopFilePosition(position, stageSize);
+  }
+
+  const iconCenterX = position.x + FILE_WIDTH / 2;
+  const iconCenterY = position.y + FILE_HEIGHT / 2;
+  const dx = iconCenterX - cardCenter.x;
+  const dy = iconCenterY - cardCenter.y;
+  const distance = Math.hypot(dx, dy) || 1;
+  const cardHalfWidth = (cardBounds.right - cardBounds.left) / 2;
+  const cardHalfHeight = (cardBounds.bottom - cardBounds.top) / 2;
+  const minDistance =
+    Math.hypot(cardHalfWidth, cardHalfHeight) +
+    Math.hypot(FILE_WIDTH / 2, FILE_HEIGHT / 2) +
+    DESKTOP_FILE_CLEARANCE;
+
+  return clampDesktopFilePosition(
+    {
+      x: cardCenter.x + (dx / distance) * minDistance - FILE_WIDTH / 2,
+      y: cardCenter.y + (dy / distance) * minDistance - FILE_HEIGHT / 2,
+    },
+    stageSize,
+  );
+}
+
+function getDesktopFileOrbitPositions(
+  filesList: readonly DesktopFile[],
+  stageSize: StageSize,
+  cardPosition: Position,
+): DesktopFile[] {
+  const cardWidth = Math.min(
+    CARD_WIDTH,
+    stageSize.width - DESKTOP_STAGE_PADDING * 2,
+  );
+  const centerX = cardPosition.x + cardWidth / 2;
+  const centerY = cardPosition.y + CARD_HEIGHT / 2;
+  const cardCenter = { x: centerX, y: centerY };
+  const cardBounds = {
+    left: cardPosition.x,
+    top: cardPosition.y,
+    right: cardPosition.x + cardWidth,
+    bottom: cardPosition.y + CARD_HEIGHT,
+  };
+  const orbitScale = clamp(
+    Math.min(
+      (stageSize.width - cardWidth) / (STAGE_WIDTH - CARD_WIDTH),
+      (stageSize.height - HEADER_HEIGHT - CARD_HEIGHT) /
+        (STAGE_HEIGHT - HEADER_HEIGHT - CARD_HEIGHT),
+    ),
+    0.72,
+    1.08,
+  );
+
+  return filesList.map((file) => {
+    const offset = desktopFileOrbitOffsets[file.id] ?? { x: 0, y: 0 };
+    const iconCenterX = centerX + offset.x * orbitScale;
+    const iconCenterY = centerY + offset.y * orbitScale;
+    const position = {
+      x: iconCenterX - FILE_WIDTH / 2,
+      y: iconCenterY - FILE_HEIGHT / 2,
+    };
+
+    return {
+      ...file,
+      ...resolveFilePositionAvoidingCard(
+        position,
+        cardBounds,
+        cardCenter,
+        stageSize,
+      ),
+    };
+  });
 }
 
 function DesktopFileIcon({
@@ -900,6 +1039,145 @@ const homeIntroImage = [
   },
 ] as const satisfies ReadonlyArray<CaseImage>;
 
+const subscriptionIntroImage = [
+  {
+    src: "/cases/subscribe/Тарифы.png",
+    alt: "Страница тарифов — сравнение планов",
+    width: 3456,
+    height: 2004,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const subscriptionTariffScreens = [
+  {
+    src: "/cases/subscribe/Страница тарифаов.png",
+    alt: "Страница тарифов — обновлённая линейка",
+    width: 3456,
+    height: 2976,
+    layout: "solo",
+  },
+  {
+    src: "/cases/subscribe/Безлимитный.png",
+    alt: "Новый тариф «Безлимитный»",
+    width: 3456,
+    height: 2048,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const subscriptionManagementScreens = [
+  {
+    src: "/cases/subscribe/Банковские карты.png",
+    alt: "Управление подпиской — способы оплаты",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/subscribe/Платёжка.png",
+    alt: "Оформление подписки — платёжная форма",
+    width: 3456,
+    height: 2048,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const subscriptionPaymentScreens = [
+  {
+    src: "/cases/subscribe/Оплачено.png",
+    alt: "Успешная оплата подписки",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/subscribe/Оплата не\u00a0прошла.png",
+    alt: "Ошибка оплаты — понятное сообщение",
+    width: 3456,
+    height: 2048,
+  },
+  {
+    src: "/cases/subscribe/Письмо.png",
+    alt: "Письмо об автосписании и условиях подписки",
+    width: 3456,
+    height: 2250,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const vkCartIntroImage = [
+  {
+    src: "/cases/cart/cover.png",
+    alt: "Редизайн корзины VK Маркет — обложка кейса",
+    width: 1920,
+    height: 1080,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const vkCartScreens = [
+  {
+    src: "/cases/cart/003.png",
+    alt: "Корзина VK Маркет — экран 1",
+    width: 2880,
+    height: 2744,
+  },
+  {
+    src: "/cases/cart/004.png",
+    alt: "Корзина VK Маркет — экран 2",
+    width: 2880,
+    height: 2524,
+  },
+  {
+    src: "/cases/cart/005.png",
+    alt: "Корзина VK Маркет — экран 3",
+    width: 2880,
+    height: 4428,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+function CaseInsight({ children }: { children: ReactNode }) {
+  return (
+    <aside className="case-insight flex gap-3 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+      <span aria-hidden="true" className="shrink-0 text-lg leading-6">
+        💡
+      </span>
+      <p>{children}</p>
+    </aside>
+  );
+}
+
+function CaseFigmaPrototype({
+  title,
+  prototypeUrl,
+}: {
+  title: string;
+  prototypeUrl: string;
+}) {
+  const embedUrl = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(prototypeUrl)}`;
+
+  return (
+    <section className="case-section mx-auto flex w-full flex-col gap-4">
+      <h3>{title}</h3>
+      <div className="case-figma-embed overflow-hidden rounded-2xl border border-white/12 bg-white/6">
+        <iframe
+          title={title}
+          src={embedUrl}
+          className="case-figma-embed__frame"
+          allowFullScreen
+        />
+      </div>
+      <a
+        href={prototypeUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex w-fit items-center gap-1.5 rounded-sm text-base font-semibold leading-6 tracking-[-0.2px] text-white/86 underline decoration-white/35 underline-offset-2 transition hover:text-white hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+      >
+        Открыть прототип в Figma
+        <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={2.1} />
+      </a>
+    </section>
+  );
+}
+
 function CaseImageLightbox({
   image,
   isClosing,
@@ -1530,6 +1808,259 @@ function ClassesStatisticsCase() {
   );
 }
 
+function SubscriptionCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseImageGrid images={subscriptionIntroImage} />
+
+      <section className="case-section mx-auto flex w-full flex-col gap-4">
+        <h1>Тарифы в Лаборатории заданий</h1>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Чтобы масштабировать продукт и монетизацию, команда решила:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>обновить тарифную линейку</li>
+          <li>улучшить UX страницы тарифов</li>
+          <li>переработать страницу управления подпиской</li>
+          <li>внедрить промокоды</li>
+          <li>сделать прозрачные условия автосписаний</li>
+          <li>добавить новый тариф «Безлимитный»</li>
+        </ul>
+      </section>
+
+      <CaseSection title="Цель исследования">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Понять:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>как показывать тарифы понятно и прозрачно</li>
+          <li>как ограничивать бесплатный тариф, не ломая UX</li>
+          <li>как стимулировать апгрейд</li>
+          <li>как уведомлять о лимитах</li>
+          <li>как строить страницу управления подпиской</li>
+          <li>какие механики используют ИИ‑сервисы и EdTech</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Объекты исследования">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Я проанализировал <strong className="font-semibold text-white/92">15+ сервисов</strong>, среди них:
+        </p>
+        <h4>ИИ‑сервисы</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Syntx, Perplexity, Gemini, ChatGPT, Claude, Lovable
+        </p>
+        <h4>EdTech</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Arzamas, Fitstars, MyBook, Premier
+        </p>
+        <h4>Инструменты для работы</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Zoom, Tilda, Kinescope, Jivo, Fyrebox, Анкетолог
+        </p>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Каждый сервис анализировался по единым критериям:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>где расположен вход в тарифы</li>
+          <li>как показывают текущий тариф</li>
+          <li>как ограничивают бесплатный план</li>
+          <li>как уведомляют о лимитах</li>
+          <li>как предлагают апгрейд</li>
+          <li>как работают автосписания</li>
+          <li>как устроена страница тарифов</li>
+          <li>как устроена страница управления подпиской</li>
+        </ul>
+      </CaseSection>
+
+      <CaseImageGrid images={subscriptionTariffScreens} />
+
+      <CaseSection title="Ключевые инсайты исследования">
+        <h4>Тарифы должны быть доступны из нескольких точек</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Лучшие сервисы дублируют вход в тарифы:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>верхнее меню</li>
+          <li>личный кабинет</li>
+          <li>футер</li>
+          <li>уведомления о лимитах</li>
+        </ul>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Это снижает фрустрацию и повышает конверсию.
+        </p>
+
+        <h4>Ограничения бесплатного тарифа должны быть видимыми</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Паттерны:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>красные плашки (Tilda, Jivo)</li>
+          <li>баннеры внизу экрана</li>
+          <li>всплывающие уведомления при превышении лимита</li>
+        </ul>
+
+        <h4>Апгрейд — максимально простой</h4>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>1–2 клика</li>
+          <li>подсветка рекомендуемого тарифа</li>
+          <li>сравнение тарифов на одном экране</li>
+        </ul>
+
+        <h4>Даунгрейд — всегда со следующего периода</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Стандарт индустрии:
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>апгрейд — сразу</li>
+          <li>даунгрейд — с нового биллингового месяца</li>
+        </ul>
+
+        <h4>Страница управления подпиской должна отвечать на 3 вопроса</h4>
+        <ol className="list-decimal space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>Какой тариф сейчас?</li>
+          <li>До какого числа он действует?</li>
+          <li>Что я могу сделать дальше?</li>
+        </ol>
+      </CaseSection>
+
+      <CaseImageGrid images={subscriptionManagementScreens} />
+
+      <CaseImageGrid images={subscriptionPaymentScreens} />
+
+      <CaseSection title="Результаты">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>
+            конверсия в просмотр тарифов:{" "}
+            <strong className="font-semibold text-white/92">+38%</strong>
+          </li>
+          <li>
+            конверсия в покупку:{" "}
+            <strong className="font-semibold text-white/92">+21%</strong>
+          </li>
+          <li>
+            уменьшение обращений в поддержку по подпискам:{" "}
+            <strong className="font-semibold text-white/92">–29%</strong>
+          </li>
+          <li>
+            рост апгрейдов тарифов:{" "}
+            <strong className="font-semibold text-white/92">+14%</strong>
+          </li>
+          <li>
+            рост продлений подписки:{" "}
+            <strong className="font-semibold text-white/92">+11%</strong>
+          </li>
+          <li>
+            снижение отмен подписки:{" "}
+            <strong className="font-semibold text-white/92">–8%</strong>
+          </li>
+          <li>
+            CTR на уведомления о лимитах:{" "}
+            <strong className="font-semibold text-white/92">+44%</strong>
+          </li>
+          <li>
+            конверсия из уведомления в покупку:{" "}
+            <strong className="font-semibold text-white/92">+26%</strong>
+          </li>
+        </ul>
+      </CaseSection>
+    </div>
+  );
+}
+
+function VkCartCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseImageGrid images={vkCartIntroImage} />
+
+      <section className="case-section mx-auto flex w-full flex-col gap-4">
+        <h1>Тестовое задание VK Маркет · Корзина</h1>
+      </section>
+
+      <CaseSection title="Задача">
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Сделать редизайн страницы корзины приложения VK Маркет.
+        </p>
+      </CaseSection>
+
+      <CaseSection title="Личные цели">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>Выполнить задачу за максимально короткий срок — 16 часов.</li>
+          <li>
+            Использовать библиотеку VKUI, позволяющую максимально эффективно
+            сэкономить время.
+          </li>
+          <li>Объяснять каждый шаг — почему так было сделано.</li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Исследование">
+        <h4>Анализ конкурентов и наблюдение</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          По модели КАНО выделил основные атрибуты корзины конкурентов и
+          структурировал информацию.
+        </p>
+
+        <h4>Интервью</h4>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          Провёл три глубинных интервью с пользователями маркетплейсов. В
+          выборке были как те, кто пользовался Маркетом, так и нет.
+        </p>
+        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <strong className="font-semibold text-white/92">
+            Некоторые вопросы респондентам:
+          </strong>
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>
+            Что вам нравится и не нравится больше всего при оформлении покупки?
+          </li>
+          <li>
+            Попробуйте вспомнить последний раз, когда процесс оформления покупки
+            по какой-то причине не мог быть завершён. Что вы чувствовали в этот
+            момент?
+          </li>
+          <li>
+            Что нужно поменять, добавить или убрать, чтобы вам было удобнее
+            оформлять заказ?
+          </li>
+          <li>
+            Какие элементы корзины были самыми важными? А какие — наименее
+            важными?
+          </li>
+        </ul>
+      </CaseSection>
+
+      <CaseSection title="Выводы из исследования / Гипотезы">
+        <div className="flex flex-col gap-3">
+          <CaseInsight>
+            Большинство респондентов активно пользуются закладками / избранным.
+          </CaseInsight>
+          <CaseInsight>
+            Самыми важными критериями являются: цена, отзывы, количество
+            заказов.
+          </CaseInsight>
+          <CaseInsight>
+            Чаще всего респонденты ждут, что им предложат альтернативные товары
+            выбранным или дополнительные товары.
+          </CaseInsight>
+          <CaseInsight>
+            Критерии, на которые респонденты обращают внимание при покупке:
+            цена, чёткие фотографии, возможность выбора доставки.
+          </CaseInsight>
+        </div>
+      </CaseSection>
+
+      <CaseImageGrid images={vkCartScreens} />
+
+      <CaseFigmaPrototype
+        title="Прототип в Figma"
+        prototypeUrl={vkCartFigmaPrototype}
+      />
+    </div>
+  );
+}
+
 function AssistantPromoCase() {
   return (
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto text-[#fafafa]">
@@ -1739,6 +2270,10 @@ function CaseWindow({
         <ClassesStatisticsCase />
       ) : caseId === "ai-assistant" ? (
         <AiAssistantCase />
+      ) : caseId === "subscription" ? (
+        <SubscriptionCase />
+      ) : caseId === "vk-cart" ? (
+        <VkCartCase />
       ) : (
         <CasePlaceholder title={title} />
       )}
@@ -1809,26 +2344,13 @@ export default function Home() {
         return;
       }
 
+      const desktopCardPosition = getDesktopCardPosition(nextStageSize);
+      setCardPosition(desktopCardPosition);
       setFiles(
-        desktopFiles.map((file) => ({
-          ...file,
-          ...getResponsivePosition(
-            file,
-            nextStageSize,
-            { width: FILE_WIDTH, height: FILE_HEIGHT },
-            HEADER_HEIGHT,
-          ),
-        })),
-      );
-      setCardPosition(
-        getResponsivePosition(
-          { x: 560, y: 352 },
+        getDesktopFileOrbitPositions(
+          desktopFiles,
           nextStageSize,
-          {
-            width: Math.min(CARD_WIDTH, nextStageSize.width),
-            height: CARD_HEIGHT,
-          },
-          HEADER_HEIGHT,
+          desktopCardPosition,
         ),
       );
       setCaseWindowPosition(
@@ -2196,21 +2718,6 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="desktop-files">
-          {files.map((file, index) => (
-            <DesktopFileIcon
-              key={file.id}
-              file={file}
-              index={index}
-              isDragging={
-                dragState?.target.type === "file" &&
-                dragState.target.id === file.id
-              }
-              onDragStart={startDrag}
-            />
-          ))}
-        </div>
-
         {activeCaseId ? (
           <CaseWindow
             caseId={activeCaseId}
@@ -2263,7 +2770,7 @@ export default function Home() {
           <div className="relative size-14 overflow-hidden rounded-full bg-white">
             <Image
               src="/figma-profile-avatar.jpeg"
-              alt=""
+              alt="Родион Плехов"
               fill
               priority
               sizes="56px"
@@ -2272,7 +2779,7 @@ export default function Home() {
           </div>
 
           <div className="flex w-full flex-col gap-2">
-            <h1>Родион Плехов</h1>
+            <h1>Родион Плехов — продуктовый дизайнер</h1>
             <p className="text-base font-normal leading-6 tracking-[-0.2px]">
               Привет! Я — дизайнер интерфейсов, работаю в{" "}
               <a
@@ -2295,6 +2802,21 @@ export default function Home() {
             </p>
           </div>
         </article>
+
+        <div className="desktop-files">
+          {files.map((file, index) => (
+            <DesktopFileIcon
+              key={file.id}
+              file={file}
+              index={index}
+              isDragging={
+                dragState?.target.type === "file" &&
+                dragState.target.id === file.id
+              }
+              onDragStart={startDrag}
+            />
+          ))}
+        </div>
       </section>
     </main>
   );
