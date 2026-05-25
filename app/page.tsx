@@ -2779,7 +2779,7 @@ export default function Home() {
           </div>
 
           <div className="flex w-full flex-col gap-2">
-            <h1>Родион Плехов — продуктовый дизайнер</h1>
+            <h1>Родион Плехов</h1>
             <p className="text-base font-normal leading-6 tracking-[-0.2px]">
               Привет! Я — дизайнер интерфейсов, работаю в{" "}
               <a
