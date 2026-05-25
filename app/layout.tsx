@@ -41,7 +41,7 @@ export const metadata: Metadata = {
         url: siteConfig.ogImage,
         width: 512,
         height: 512,
-        alt: `${siteConfig.name} — продуктовый дизайнер`,
+        alt: `${siteConfig.name} — дизайнер интерфейсов`,
       },
     ],
   },
@@ -62,7 +62,7 @@ const portfolioJsonLd = {
   "@graph": [
     {
       "@type": "WebSite",
-      name: siteConfig.title,
+      name: siteConfig.name,
       description: siteConfig.description,
       url: siteUrl,
       inLanguage: "ru-RU",
@@ -70,7 +70,8 @@ const portfolioJsonLd = {
     {
       "@type": "Person",
       name: siteConfig.name,
-      jobTitle: "Продуктовый дизайнер",
+      jobTitle: "Дизайнер интерфейсов",
+      description: siteConfig.description,
       url: siteUrl,
       image: `${siteUrl}${siteConfig.ogImage}`,
       sameAs: [siteConfig.telegram, siteConfig.behance, siteConfig.employer],
