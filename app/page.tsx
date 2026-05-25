@@ -23,6 +23,7 @@ type DesktopFile = {
   label: string;
   x: number;
   y: number;
+  variant?: "folder";
 };
 
 type Position = {
@@ -79,12 +80,12 @@ const caseExternalLinks: Record<string, string> = {
 };
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
-  "assistant-promo": "/cases/assistant-promo/1.avif",
   profile: "/cases/profile/login-desktop.png",
 };
 
 const caseWindowTitles: Record<string, string> = {
   "about-me": "Обо мне",
+  motion: "Моушн",
 };
 
 const aboutMeHighlights = [
@@ -107,17 +108,12 @@ const aboutMeHighlights = [
 
 const desktopFiles: DesktopFile[] = [
   { id: "home", label: "Главная", x: 289, y: 154 },
-  {
-    id: "assistant-promo",
-    label: "Промо.mp4",
-    x: 1122,
-    y: 154,
-  },
   { id: "classes", label: "Статистика занятий", x: 804, y: 190 },
   { id: "subscription", label: "Подписка", x: 261, y: 584 },
   { id: "vk-cart", label: "Корзина", x: 613, y: 831 },
   { id: "profile", label: "Профиль", x: 1087, y: 716 },
   { id: "tasks", label: "Проверка заданий", x: 1294, y: 328 },
+  { id: "motion", label: "Моушн", x: 437, y: 328, variant: "folder" },
 ];
 
 function formatCurrentTime() {
@@ -212,18 +208,31 @@ function DesktopFileIcon({
       }
     >
       <div className="desktop-file-icon rounded-[24px] border border-white/0 p-4 transition duration-200 group-hover:border-white/35 group-hover:bg-black/15 group-focus-visible:border-white/35 group-focus-visible:bg-black/15 group-focus-visible:outline-none">
-        <div className="relative h-[72px] w-24 overflow-hidden rounded-lg bg-[#fafafa] shadow-[0_0_12px_rgba(0,0,0,0.16)] transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
-          {desktopFilePreviews[file.id] ? (
+        {file.variant === "folder" ? (
+          <div className="relative h-[72px] w-24 transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
             <Image
-              src={desktopFilePreviews[file.id]!}
+              src="/icons/folder.png"
               alt=""
               fill
               sizes="96px"
               unoptimized
-              className="object-cover"
+              className="object-contain drop-shadow-[0_0_12px_rgba(0,0,0,0.16)]"
             />
-          ) : null}
-        </div>
+          </div>
+        ) : (
+          <div className="relative h-[72px] w-24 overflow-hidden rounded-lg bg-[#fafafa] shadow-[0_0_12px_rgba(0,0,0,0.16)] transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
+            {desktopFilePreviews[file.id] ? (
+              <Image
+                src={desktopFilePreviews[file.id]!}
+                alt=""
+                fill
+                sizes="96px"
+                unoptimized
+                className="object-cover"
+              />
+            ) : null}
+          </div>
+        )}
       </div>
       <p className="desktop-label max-w-32 text-center text-base font-semibold leading-5 tracking-[-0.2px] text-[#fafafa]">
         {file.label}
@@ -242,17 +251,290 @@ function CaseImageSlot({ label }: { label: string }) {
   );
 }
 
-function CaseVideo({ src, title }: { src: string; title: string }) {
+function CaseVideo({
+  src,
+  title,
+  mimeType = "video/mp4",
+}: {
+  src: string;
+  title: string;
+  mimeType?: string;
+}) {
+  return (
+    <div className="case-video-frame">
+      <video
+        className="case-video-frame__player"
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={title}
+      >
+        <source src={src} type={mimeType} />
+      </video>
+    </div>
+  );
+}
+
+function CaseMotionVideo({
+  src,
+  className,
+  mimeType = "video/webm",
+}: {
+  src: string;
+  className?: string;
+  mimeType?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) {
+      return;
+    }
+
+    video.muted = true;
+    void video.play().catch(() => {
+      // Browsers may block autoplay until interaction; grid click still works.
+    });
+  }, [src]);
+
   return (
     <video
-      className="aspect-video w-full rounded-2xl bg-black/20"
-      controls
+      ref={videoRef}
+      className={className}
+      autoPlay
+      loop
+      muted
       playsInline
-      preload="metadata"
-      aria-label={title}
+      preload="auto"
     >
-      <source src={src} type="video/webm" />
+      <source src={src} type={mimeType} />
     </video>
+  );
+}
+
+type MotionVideo = {
+  src: string;
+  title: string;
+  mimeType?: string;
+};
+
+const motionPromoVideo: MotionVideo = {
+  src: "/assistant-promo.webm",
+  title: "Ассистент преподавателя",
+  mimeType: "video/webm",
+};
+
+const motionGridVideos: MotionVideo[] = [
+  { src: "/motion/landing-student-ai-mentor.webm", title: "ИИ-наставник для ученика" },
+  { src: "/motion/landing-student-ai-career.webm", title: "ИИ-профориентолог" },
+  { src: "/motion/landing-hero.webm", title: "Hero-блок лендинга" },
+  { src: "/motion/landing-student-ai-tutor.webm", title: "ИИ-репетитор" },
+  {
+    src: "/motion/landing-teacher-personalized.webm",
+    title: "Персонализированное обучение",
+  },
+  { src: "/motion/landing-teacher-ai-tasks.webm", title: "Создание заданий с ИИ" },
+  {
+    src: "/motion/landing-teacher-methodology.webm",
+    title: "Методическая поддержка",
+  },
+  { src: "/motion/brand-staging-opener.webm", title: "Заставка логотипа" },
+  { src: "/motion/ui-toggle.webm", title: "Переключатель интерфейса" },
+  { src: "/motion/block-fgos.webm", title: "Справочник ФГОС" },
+  { src: "/motion/brand-gold-logo.webm", title: "Золотой логотип" },
+  { src: "/motion/capture-8490.webm", title: "Запись с устройства" },
+  { src: "/motion/capture-7042.webm", title: "Демо интерфейса" },
+  { src: "/motion/brand-render-hd.webm", title: "Рендер логотипа · Full HD" },
+  { src: "/motion/ui-composition.webm", title: "Композиция интерфейса" },
+  { src: "/motion/ui-final-comps.webm", title: "Финальная композиция" },
+  { src: "/motion/brand-render-3.webm", title: "Рендер логотипа · вариант 3" },
+  { src: "/motion/ui-screen-closeup.webm", title: "Крупный план экрана" },
+];
+
+const motionPlaylist = [motionPromoVideo, ...motionGridVideos];
+
+function getMotionVideoLayout(index: number): "wide" | "square" {
+  return index % 3 === 0 ? "wide" : "square";
+}
+
+function CaseVideoLightbox({
+  video,
+  isClosing,
+  onClose,
+}: {
+  video: MotionVideo;
+  isClosing: boolean;
+  onClose: () => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
+    const element = videoRef.current;
+    if (!element) {
+      return;
+    }
+
+    element.muted = true;
+    void element.play().catch(() => {});
+  }, [video.src]);
+
+  return (
+    <div
+      className={`case-image-lightbox ${
+        isClosing
+          ? "case-image-lightbox--closing"
+          : "case-image-lightbox--opening"
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={video.title}
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        aria-label="Закрыть просмотр видео"
+        className="case-image-lightbox__close grid size-10 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
+      </button>
+      <div
+        className="case-image-lightbox__frame"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <CaseMotionVideo
+          src={video.src}
+          mimeType={video.mimeType}
+          className={`case-image-lightbox__image case-image-lightbox__video ${
+            isClosing
+              ? "case-image-lightbox__image--closing"
+              : "case-image-lightbox__image--opening"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function MotionVideoTile({
+  video,
+  layout,
+  onOpen,
+}: {
+  video: MotionVideo;
+  layout: "wide" | "square";
+  onOpen: (video: MotionVideo) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`case-zoomable-video bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${
+        layout === "wide" ? "case-motion-item--wide" : "case-motion-item--square"
+      }`}
+      onClick={() => onOpen(video)}
+      aria-label={`Открыть на весь экран: ${video.title}`}
+    >
+      <CaseMotionVideo
+        src={video.src}
+        mimeType={video.mimeType}
+        className="case-zoomable-video__player"
+      />
+    </button>
+  );
+}
+
+function CaseMotionGrid({
+  videos,
+}: {
+  videos: ReadonlyArray<MotionVideo>;
+}) {
+  const [lightboxVideo, setLightboxVideo] = useState<MotionVideo | null>(null);
+  const [isLightboxClosing, setIsLightboxClosing] = useState(false);
+  const lightboxCloseTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (lightboxCloseTimeoutRef.current) {
+        window.clearTimeout(lightboxCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function openLightbox(video: MotionVideo) {
+    if (lightboxCloseTimeoutRef.current) {
+      window.clearTimeout(lightboxCloseTimeoutRef.current);
+      lightboxCloseTimeoutRef.current = null;
+    }
+
+    setIsLightboxClosing(false);
+    setLightboxVideo(video);
+  }
+
+  function closeLightbox() {
+    if (!lightboxVideo || isLightboxClosing) {
+      return;
+    }
+
+    setIsLightboxClosing(true);
+    lightboxCloseTimeoutRef.current = window.setTimeout(() => {
+      setLightboxVideo(null);
+      setIsLightboxClosing(false);
+      lightboxCloseTimeoutRef.current = null;
+    }, CASE_LIGHTBOX_ANIMATION_MS);
+  }
+
+  return (
+    <>
+      <div className="case-motion-layout mx-auto w-full">
+        {videos.map((video, index) => (
+          <MotionVideoTile
+            key={video.src}
+            video={video}
+            layout={getMotionVideoLayout(index)}
+            onOpen={openLightbox}
+          />
+        ))}
+      </div>
+      {lightboxVideo
+        ? createPortal(
+            <CaseVideoLightbox
+              video={lightboxVideo}
+              isClosing={isLightboxClosing}
+              onClose={closeLightbox}
+            />,
+            document.body,
+          )
+        : null}
+    </>
+  );
+}
+
+function MotionCase() {
+  return (
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col overflow-y-auto pr-2 text-[#fafafa]">
+      <CaseMotionGrid videos={motionPlaylist} />
+    </div>
   );
 }
 
@@ -938,6 +1220,7 @@ function AssistantPromoCase() {
       <CaseVideo
         src="/assistant-promo.webm"
         title="Промо Ассистента преподавателя"
+        mimeType="video/webm"
       />
 
       <CaseSection title="Задача">
@@ -1134,6 +1417,8 @@ function CaseWindow({
         <UnifiedProfileCase />
       ) : caseId === "assistant-promo" ? (
         <AssistantPromoCase />
+      ) : caseId === "motion" ? (
+        <MotionCase />
       ) : (
         <CasePlaceholder title={title} />
       )}
