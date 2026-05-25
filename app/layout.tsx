@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { YandexMetrika } from "@/components/yandex-metrika";
 import { getSiteUrl, siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -99,6 +100,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <YandexMetrika />
       </body>
     </html>
   );
