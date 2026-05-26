@@ -1,6 +1,11 @@
 export const profileBio =
   "Привет! Я — дизайнер интерфейсов, работаю в СберОбразовании. Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения.";
 
+export function withBasePath(path: string) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+  return `${basePath}${path}`;
+}
+
 export const siteConfig = {
   name: "Родион Плехов",
   title: "Родион Плехов",
@@ -21,10 +26,10 @@ export const siteConfig = {
   telegram: "https://t.me/r_plekhov",
   behance: "https://www.behance.net/plekhovrodion",
   employer: "https://sbereducation.ru/",
-  ogImage: "/figma-profile-avatar.jpeg",
+  ogImage: withBasePath("/figma-profile-avatar.jpeg"),
 } as const;
 
-export const productionSiteUrl = "https://plekhov.online";
+export const productionSiteUrl = "https://plekhovrodion.github.io/portfolio";
 
 export function getSiteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {

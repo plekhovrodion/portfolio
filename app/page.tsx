@@ -16,6 +16,7 @@ import type {
   ReactNode,
 } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { withBasePath } from "@/lib/site";
 import { createPortal } from "react-dom";
 
 type DesktopFile = {
@@ -73,7 +74,7 @@ const CASE_LIGHTBOX_ANIMATION_MS = 220;
 const MOBILE_LAYOUT_BREAKPOINT = 900;
 const NARROW_MOBILE_BREAKPOINT = 520;
 const MOBILE_FILE_COLUMNS = 3;
-const MUSIC_BACKGROUND_VIDEO = "/dancing-rat-chess-type-beat.webm";
+const MUSIC_BACKGROUND_VIDEO = withBasePath("/dancing-rat-chess-type-beat.webm");
 
 const vkCartFigmaPrototype =
   "https://www.figma.com/proto/1C93yxYA4hkGBogyImvYgE/%D0%A2%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5-VK-%D0%9C%D0%B0%D1%80%D0%BA%D0%B5%D1%82-%D0%9A%D0%BE%D1%80%D0%B7%D0%B8%D0%BD%D0%B0-%C2%B7-%D0%9F%D0%BB%D0%B5%D1%85%D0%BE%D0%B2-%D0%A0%D0%BE%D0%B4%D0%B8%D0%BE%D0%BD?node-id=2-8527&viewport=-7125%2C68%2C0.66&scaling=scale-down&starting-point-node-id=2%3A8527&show-proto-sidebar=1&page-id=0%3A1";
@@ -85,12 +86,12 @@ const caseExternalLinks: Record<string, string> = {
 };
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
-  home: "/cases/main/video.png",
-  classes: "/cases/statistic/metrics-overview.png",
-  profile: "/cases/profile/login-desktop.png",
-  "ai-assistant": "/cases/ai/home-desktop.png",
-  subscription: "/cases/subscribe/Тарифы.png",
-  "vk-cart": "/cases/cart/cover.png",
+  home: withBasePath("/cases/main/video.png"),
+  classes: withBasePath("/cases/statistic/metrics-overview.png"),
+  profile: withBasePath("/cases/profile/login-desktop.png"),
+  "ai-assistant": withBasePath("/cases/ai/home-desktop.png"),
+  subscription: withBasePath("/cases/subscribe/Тарифы.png"),
+  "vk-cart": withBasePath("/cases/cart/cover.png"),
 };
 
 const caseWindowTitles: Record<string, string> = {
@@ -358,7 +359,7 @@ function DesktopFileIcon({
         {file.variant === "folder" ? (
           <div className="relative h-[72px] w-24 transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
             <Image
-              src="/icons/folder.png"
+              src={withBasePath("/icons/folder.png")}
               alt=""
               fill
               sizes="96px"
@@ -464,40 +465,40 @@ type MotionVideo = {
 };
 
 const motionPromoVideo: MotionVideo = {
-  src: "/assistant-promo.webm",
+  src: withBasePath("/assistant-promo.webm"),
   title: "Ассистент преподавателя",
   mimeType: "video/webm",
 };
 
 const motionGridVideos: MotionVideo[] = [
-  { src: "/motion/landing-student-ai-mentor.webm", title: "ИИ-наставник для ученика" },
-  { src: "/motion/landing-student-ai-career.webm", title: "ИИ-профориентолог" },
+  { src: withBasePath("/motion/landing-student-ai-mentor.webm"), title: "ИИ-наставник для ученика" },
+  { src: withBasePath("/motion/landing-student-ai-career.webm"), title: "ИИ-профориентолог" },
   {
-    src: "/motion/landing-hero.mp4",
+    src: withBasePath("/motion/landing-hero.mp4"),
     title: "Hero-блок лендинга",
     mimeType: "video/mp4",
   },
-  { src: "/motion/landing-student-ai-tutor.webm", title: "ИИ-репетитор" },
+  { src: withBasePath("/motion/landing-student-ai-tutor.webm"), title: "ИИ-репетитор" },
   {
-    src: "/motion/landing-teacher-personalized.webm",
+    src: withBasePath("/motion/landing-teacher-personalized.webm"),
     title: "Персонализированное обучение",
   },
-  { src: "/motion/landing-teacher-ai-tasks.webm", title: "Создание заданий с ИИ" },
+  { src: withBasePath("/motion/landing-teacher-ai-tasks.webm"), title: "Создание заданий с ИИ" },
   {
-    src: "/motion/landing-teacher-methodology.webm",
+    src: withBasePath("/motion/landing-teacher-methodology.webm"),
     title: "Методическая поддержка",
   },
-  { src: "/motion/brand-staging-opener.webm", title: "Заставка логотипа" },
-  { src: "/motion/ui-toggle.webm", title: "Переключатель интерфейса" },
-  { src: "/motion/block-fgos.webm", title: "Справочник ФГОС" },
-  { src: "/motion/brand-gold-logo.webm", title: "Золотой логотип" },
-  { src: "/motion/capture-8490.webm", title: "Запись с устройства" },
-  { src: "/motion/capture-7042.webm", title: "Демо интерфейса" },
-  { src: "/motion/brand-render-hd.webm", title: "Рендер логотипа · Full HD" },
-  { src: "/motion/ui-composition.webm", title: "Композиция интерфейса" },
-  { src: "/motion/ui-final-comps.webm", title: "Финальная композиция" },
-  { src: "/motion/brand-render-3.webm", title: "Рендер логотипа · вариант 3" },
-  { src: "/motion/ui-screen-closeup.webm", title: "Крупный план экрана" },
+  { src: withBasePath("/motion/brand-staging-opener.webm"), title: "Заставка логотипа" },
+  { src: withBasePath("/motion/ui-toggle.webm"), title: "Переключатель интерфейса" },
+  { src: withBasePath("/motion/block-fgos.webm"), title: "Справочник ФГОС" },
+  { src: withBasePath("/motion/brand-gold-logo.webm"), title: "Золотой логотип" },
+  { src: withBasePath("/motion/capture-8490.webm"), title: "Запись с устройства" },
+  { src: withBasePath("/motion/capture-7042.webm"), title: "Демо интерфейса" },
+  { src: withBasePath("/motion/brand-render-hd.webm"), title: "Рендер логотипа · Full HD" },
+  { src: withBasePath("/motion/ui-composition.webm"), title: "Композиция интерфейса" },
+  { src: withBasePath("/motion/ui-final-comps.webm"), title: "Финальная композиция" },
+  { src: withBasePath("/motion/brand-render-3.webm"), title: "Рендер логотипа · вариант 3" },
+  { src: withBasePath("/motion/ui-screen-closeup.webm"), title: "Крупный план экрана" },
 ];
 
 const motionPlaylist = [motionPromoVideo, ...motionGridVideos];
@@ -689,25 +690,25 @@ function MotionCase() {
 
 const assistantPromoFrames = [
   {
-    src: "/cases/assistant-promo/1.avif",
+    src: withBasePath("/cases/assistant-promo/1.avif"),
     alt: "Поле ввода ассистента: «Напишите, с чем вам помочь»",
     width: 1024,
     height: 567,
   },
   {
-    src: "/cases/assistant-promo/2.avif",
+    src: withBasePath("/cases/assistant-promo/2.avif"),
     alt: "Кадр промо: «Попробуйте»",
     width: 1024,
     height: 567,
   },
   {
-    src: "/cases/assistant-promo/3.avif",
+    src: withBasePath("/cases/assistant-promo/3.avif"),
     alt: "Кнопка «Создавайте задания» с ИИ-иконкой",
     width: 1024,
     height: 565,
   },
   {
-    src: "/cases/assistant-promo/4.avif",
+    src: withBasePath("/cases/assistant-promo/4.avif"),
     alt: "Расписание занятий в интерфейсе ассистента",
     width: 1024,
     height: 570,
@@ -782,7 +783,7 @@ function groupCaseImages(
 
 const profileIntroImage = [
   {
-    src: "/cases/profile/login-desktop.png",
+    src: withBasePath("/cases/profile/login-desktop.png"),
     alt: "Вход в аккаунт — веб",
     width: 1024,
     height: 767,
@@ -791,7 +792,7 @@ const profileIntroImage = [
 
 const profileSsoImages = [
   {
-    src: "/cases/profile/redirect-loading.png",
+    src: withBasePath("/cases/profile/redirect-loading.png"),
     alt: "Переход в сервис после входа",
     width: 1024,
     height: 767,
@@ -800,31 +801,31 @@ const profileSsoImages = [
 
 const profileAuthFlowImages = [
   {
-    src: "/cases/profile/login-desktop.png",
+    src: withBasePath("/cases/profile/login-desktop.png"),
     alt: "Вход в аккаунт — веб",
     width: 1024,
     height: 767,
   },
   {
-    src: "/cases/profile/otp-desktop.png",
+    src: withBasePath("/cases/profile/otp-desktop.png"),
     alt: "Ввод кода из СМС — веб",
     width: 1024,
     height: 767,
   },
   {
-    src: "/cases/profile/login-mobile.png",
+    src: withBasePath("/cases/profile/login-mobile.png"),
     alt: "Вход в аккаунт — мобильная версия",
     width: 473,
     height: 1024,
   },
   {
-    src: "/cases/profile/otp-mobile.png",
+    src: withBasePath("/cases/profile/otp-mobile.png"),
     alt: "Ввод кода из СМС — мобильная версия",
     width: 473,
     height: 1024,
   },
   {
-    src: "/cases/profile/email-confirm-mobile.png",
+    src: withBasePath("/cases/profile/email-confirm-mobile.png"),
     alt: "Подтверждение электронной почты",
     width: 473,
     height: 1024,
@@ -833,7 +834,7 @@ const profileAuthFlowImages = [
 
 const profilePageImage = [
   {
-    src: "/cases/profile/profile-page.png",
+    src: withBasePath("/cases/profile/profile-page.png"),
     alt: "Профиль пользователя: данные, контакты и школа",
     width: 824,
     height: 1024,
@@ -843,7 +844,7 @@ const profilePageImage = [
 
 const profileScreensImages = [
   {
-    src: "/cases/profile/account-protection.png",
+    src: withBasePath("/cases/profile/account-protection.png"),
     alt: "Защита аккаунта: логин и пароль",
     width: 1024,
     height: 767,
@@ -852,13 +853,13 @@ const profileScreensImages = [
 
 const profileErrorImages = [
   {
-    src: "/cases/profile/error-login-failed.png",
+    src: withBasePath("/cases/profile/error-login-failed.png"),
     alt: "Ошибка входа в аккаунт",
     width: 1024,
     height: 767,
   },
   {
-    src: "/cases/profile/error-service-unavailable.png",
+    src: withBasePath("/cases/profile/error-service-unavailable.png"),
     alt: "Сервис временно недоступен",
     width: 1024,
     height: 767,
@@ -874,7 +875,7 @@ const profileGalleryImages: CaseImage[] = [
 
 const mainPageCoverImage = [
   {
-    src: "/cases/main/video.png",
+    src: withBasePath("/cases/main/video.png"),
     alt: "Главная страница Лаборатории заданий — hero-блок",
     width: 2048,
     height: 1200,
@@ -884,19 +885,19 @@ const mainPageCoverImage = [
 
 const mainPageMobileScreens = [
   {
-    src: "/cases/main/screen-1.png",
+    src: withBasePath("/cases/main/screen-1.png"),
     alt: "Главная страница — мобильная версия, экран 1",
     width: 640,
     height: 1400,
   },
   {
-    src: "/cases/main/screen-2.png",
+    src: withBasePath("/cases/main/screen-2.png"),
     alt: "Главная страница — мобильная версия, экран 2",
     width: 640,
     height: 1400,
   },
   {
-    src: "/cases/main/screen-3.png",
+    src: withBasePath("/cases/main/screen-3.png"),
     alt: "Главная страница — мобильная версия, экран 3",
     width: 640,
     height: 1400,
@@ -905,25 +906,25 @@ const mainPageMobileScreens = [
 
 const mainPageDesktopScreens = [
   {
-    src: "/cases/main/video-1.png",
+    src: withBasePath("/cases/main/video-1.png"),
     alt: "Блок «Удобно учить, по‑своему учиться»",
     width: 2048,
     height: 1200,
   },
   {
-    src: "/cases/main/video-4.png",
+    src: withBasePath("/cases/main/video-4.png"),
     alt: "Блок «Здесь технологии помогают и поддерживают»",
     width: 2048,
     height: 1200,
   },
   {
-    src: "/cases/main/video-2.png",
+    src: withBasePath("/cases/main/video-2.png"),
     alt: "Блок «Классные возможности для всех» — педагогу",
     width: 2048,
     height: 1200,
   },
   {
-    src: "/cases/main/video-3.png",
+    src: withBasePath("/cases/main/video-3.png"),
     alt: "Блок «Классные возможности для всех» — ученику",
     width: 2048,
     height: 1200,
@@ -932,7 +933,7 @@ const mainPageDesktopScreens = [
 
 const statisticIntroImage = [
   {
-    src: "/cases/statistic/metrics-overview.png",
+    src: withBasePath("/cases/statistic/metrics-overview.png"),
     alt: "Страница статистики — динамика метрик",
     width: 3456,
     height: 3184,
@@ -941,7 +942,7 @@ const statisticIntroImage = [
 
 const aiIntroImage = [
   {
-    src: "/cases/ai/home-desktop.png",
+    src: withBasePath("/cases/ai/home-desktop.png"),
     alt: "Главный экран — веб",
     width: 3456,
     height: 2048,
@@ -950,19 +951,19 @@ const aiIntroImage = [
 
 const aiMobileScreens = [
   {
-    src: "/cases/ai/home-mobile.png",
+    src: withBasePath("/cases/ai/home-mobile.png"),
     alt: "Главный экран — мобильная версия",
     width: 720,
     height: 1688,
   },
   {
-    src: "/cases/ai/compose-mobile.png",
+    src: withBasePath("/cases/ai/compose-mobile.png"),
     alt: "Ввод запроса и выбор сценария",
     width: 720,
     height: 1688,
   },
   {
-    src: "/cases/ai/history-mobile.png",
+    src: withBasePath("/cases/ai/history-mobile.png"),
     alt: "История чатов",
     width: 720,
     height: 1688,
@@ -971,19 +972,19 @@ const aiMobileScreens = [
 
 const aiDesktopScreens = [
   {
-    src: "/cases/ai/lesson-planning-desktop.png",
+    src: withBasePath("/cases/ai/lesson-planning-desktop.png"),
     alt: "Планирование занятий",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/ai/chat-desktop.png",
+    src: withBasePath("/cases/ai/chat-desktop.png"),
     alt: "Чат с математической клавиатурой",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/ai/math-keyboard-spec.png",
+    src: withBasePath("/cases/ai/math-keyboard-spec.png"),
     alt: "Математическая клавиатура — спецификация",
     width: 3476,
     height: 1756,
@@ -993,37 +994,37 @@ const aiDesktopScreens = [
 
 const statisticScreens = [
   {
-    src: "/cases/statistic/filters.png",
+    src: withBasePath("/cases/statistic/filters.png"),
     alt: "Фильтры — предмет, класс и период",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/statistic/statistics-screen.png",
+    src: withBasePath("/cases/statistic/statistics-screen.png"),
     alt: "Страница статистики — обзор метрик",
     width: 2712,
     height: 1510,
   },
   {
-    src: "/cases/statistic/period-comparison.png",
+    src: withBasePath("/cases/statistic/period-comparison.png"),
     alt: "Сравнение показателей за период",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/statistic/conversation-distribution.png",
+    src: withBasePath("/cases/statistic/conversation-distribution.png"),
     alt: "Распределение разговора на уроке",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/statistic/emotional-modality.png",
+    src: withBasePath("/cases/statistic/emotional-modality.png"),
     alt: "Эмоциональная модальность",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/statistic/empty-state.png",
+    src: withBasePath("/cases/statistic/empty-state.png"),
     alt: "Пустое состояние — нет данных за период",
     width: 3456,
     height: 2048,
@@ -1032,7 +1033,7 @@ const statisticScreens = [
 
 const homeIntroImage = [
   {
-    src: "/cases/main/video.png",
+    src: withBasePath("/cases/main/video.png"),
     alt: "Главная страница Лаборатории заданий — hero-блок",
     width: 2048,
     height: 1200,
@@ -1041,7 +1042,7 @@ const homeIntroImage = [
 
 const subscriptionIntroImage = [
   {
-    src: "/cases/subscribe/Тарифы.png",
+    src: withBasePath("/cases/subscribe/Тарифы.png"),
     alt: "Страница тарифов — сравнение планов",
     width: 3456,
     height: 2004,
@@ -1051,14 +1052,14 @@ const subscriptionIntroImage = [
 
 const subscriptionTariffScreens = [
   {
-    src: "/cases/subscribe/Страница тарифаов.png",
+    src: withBasePath("/cases/subscribe/Страница тарифаов.png"),
     alt: "Страница тарифов — обновлённая линейка",
     width: 3456,
     height: 2976,
     layout: "solo",
   },
   {
-    src: "/cases/subscribe/Безлимитный.png",
+    src: withBasePath("/cases/subscribe/Безлимитный.png"),
     alt: "Новый тариф «Безлимитный»",
     width: 3456,
     height: 2048,
@@ -1067,13 +1068,13 @@ const subscriptionTariffScreens = [
 
 const subscriptionManagementScreens = [
   {
-    src: "/cases/subscribe/Банковские карты.png",
+    src: withBasePath("/cases/subscribe/Банковские карты.png"),
     alt: "Управление подпиской — способы оплаты",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/subscribe/Платёжка.png",
+    src: withBasePath("/cases/subscribe/Платёжка.png"),
     alt: "Оформление подписки — платёжная форма",
     width: 3456,
     height: 2048,
@@ -1082,19 +1083,19 @@ const subscriptionManagementScreens = [
 
 const subscriptionPaymentScreens = [
   {
-    src: "/cases/subscribe/Оплачено.png",
+    src: withBasePath("/cases/subscribe/Оплачено.png"),
     alt: "Успешная оплата подписки",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/subscribe/Оплата не\u00a0прошла.png",
+    src: withBasePath("/cases/subscribe/Оплата не\u00a0прошла.png"),
     alt: "Ошибка оплаты — понятное сообщение",
     width: 3456,
     height: 2048,
   },
   {
-    src: "/cases/subscribe/Письмо.png",
+    src: withBasePath("/cases/subscribe/Письмо.png"),
     alt: "Письмо об автосписании и условиях подписки",
     width: 3456,
     height: 2250,
@@ -1104,7 +1105,7 @@ const subscriptionPaymentScreens = [
 
 const vkCartIntroImage = [
   {
-    src: "/cases/cart/cover.png",
+    src: withBasePath("/cases/cart/cover.png"),
     alt: "Редизайн корзины VK Маркет — обложка кейса",
     width: 1920,
     height: 1080,
@@ -1114,19 +1115,19 @@ const vkCartIntroImage = [
 
 const vkCartScreens = [
   {
-    src: "/cases/cart/003.png",
+    src: withBasePath("/cases/cart/003.png"),
     alt: "Корзина VK Маркет — экран 1",
     width: 2880,
     height: 2744,
   },
   {
-    src: "/cases/cart/004.png",
+    src: withBasePath("/cases/cart/004.png"),
     alt: "Корзина VK Маркет — экран 2",
     width: 2880,
     height: 2524,
   },
   {
-    src: "/cases/cart/005.png",
+    src: withBasePath("/cases/cart/005.png"),
     alt: "Корзина VK Маркет — экран 3",
     width: 2880,
     height: 4428,
@@ -1359,7 +1360,7 @@ function AboutMeCase() {
       <section className="case-section mx-auto flex w-full flex-col gap-4">
         <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-white">
           <Image
-            src="/figma-profile-avatar.jpeg"
+            src={withBasePath("/figma-profile-avatar.jpeg")}
             alt=""
             fill
             sizes="80px"
@@ -2065,7 +2066,7 @@ function AssistantPromoCase() {
   return (
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto text-[#fafafa]">
       <CaseVideo
-        src="/assistant-promo.webm"
+        src={withBasePath("/assistant-promo.webm")}
         title="Промо Ассистента преподавателя"
         mimeType="video/webm"
       />
@@ -2653,7 +2654,7 @@ export default function Home() {
         }}
       >
         <source
-          src="/wall-2.webm"
+          src={withBasePath("/wall-2.webm")}
           type="video/webm"
         />
       </video>
@@ -2777,7 +2778,7 @@ export default function Home() {
 
           <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white">
             <Image
-              src="/figma-profile-avatar.jpeg"
+              src={withBasePath("/figma-profile-avatar.jpeg")}
               alt="Родион Плехов"
               fill
               priority

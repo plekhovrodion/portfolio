@@ -33,7 +33,8 @@ jobs:
       - name: Build static site
         run: npm run build
         env:
-          NEXT_PUBLIC_SITE_URL: https://plekhov.online
+          GITHUB_PAGES: "true"
+          NEXT_PUBLIC_SITE_URL: https://plekhovrodion.github.io/portfolio
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
