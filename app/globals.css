@@ -227,6 +227,31 @@ html {
   cursor: zoom-in;
 }
 
+.case-zoomable-image img.media-loaded {
+  animation: case-image-appear 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: var(--image-appear-delay, 0ms);
+  transition: none;
+}
+
+@keyframes case-image-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-zoomable-image img.media-loaded {
+    animation: none;
+    transform: none;
+  }
+}
+
 .case-zoomable-image img {
   display: block;
   width: 100%;

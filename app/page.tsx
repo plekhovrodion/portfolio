@@ -1552,9 +1552,11 @@ function CaseImageLightbox({
 function CaseGridImage({
   image,
   onOpen,
+  appearDelay = 0,
 }: {
   image: CaseImage;
   onOpen: (image: CaseImage) => void;
+  appearDelay?: number;
 }) {
   const { isReady, markReady } = useMediaReady(image.src);
 
@@ -1562,7 +1564,10 @@ function CaseGridImage({
     <button
       type="button"
       className="case-zoomable-image relative overflow-hidden rounded-2xl bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-      style={{ aspectRatio: `${image.width} / ${image.height}` }}
+      style={{
+        aspectRatio: `${image.width} / ${image.height}`,
+        "--image-appear-delay": `${appearDelay}ms`,
+      } as CSSProperties}
       onClick={() => onOpen(image)}
       aria-label={`Открыть на весь экран: ${image.alt}`}
     >
@@ -1601,10 +1606,11 @@ function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
                 : "case-image-grid__landscape"
             }
           >
-            {group.images.map((image) => (
+            {group.images.map((image, imageIndex) => (
               <CaseGridImage
                 key={image.src}
                 image={image}
+                appearDelay={(groupIndex * 3 + imageIndex) * 45}
                 onOpen={openLightbox}
               />
             ))}
