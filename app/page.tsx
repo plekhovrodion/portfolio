@@ -367,6 +367,25 @@ function getDesktopFileOrbitPositions(
   });
 }
 
+function DesktopFilePreview({ src }: { src: string }) {
+  const { isReady, markReady } = useMediaReady(src);
+
+  return (
+    <>
+      {!isReady ? <MediaSkeleton className="absolute inset-0" /> : null}
+      <Image
+        src={src}
+        alt=""
+        fill
+        sizes="96px"
+        unoptimized
+        className={`object-cover ${isReady ? "media-loaded" : "media-loading"}`}
+        onLoad={markReady}
+      />
+    </>
+  );
+}
+
 function DesktopFileIcon({
   file,
   isDragging,
@@ -415,14 +434,7 @@ function DesktopFileIcon({
         ) : (
           <div className="relative h-[72px] w-24 overflow-hidden rounded-lg bg-[#fafafa] shadow-[0_0_12px_rgba(0,0,0,0.16)] transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
             {desktopFilePreviews[file.id] ? (
-              <Image
-                src={desktopFilePreviews[file.id]!}
-                alt=""
-                fill
-                sizes="96px"
-                unoptimized
-                className="object-cover"
-              />
+              <DesktopFilePreview src={desktopFilePreviews[file.id]!} />
             ) : null}
           </div>
         )}
@@ -431,6 +443,36 @@ function DesktopFileIcon({
         {file.label}
       </p>
     </button>
+  );
+}
+
+function useMediaReady(source: string, isActive = true) {
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    setIsReady(false);
+  }, [source, isActive]);
+
+  const markReady = useCallback(() => {
+    setIsReady(true);
+  }, []);
+
+  return { isReady: isActive ? isReady : false, markReady };
+}
+
+function MediaSkeleton({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`media-skeleton ${className ?? ""}`}
+      style={style}
+    />
   );
 }
 
@@ -443,14 +485,20 @@ function CaseVideo({
   title: string;
   mimeType?: string;
 }) {
+  const { isReady, markReady } = useMediaReady(src);
+
   return (
     <div className="case-video-frame">
+      {!isReady ? (
+        <MediaSkeleton className="absolute inset-0 rounded-[inherit]" />
+      ) : null}
       <video
-        className="case-video-frame__player"
+        className={`case-video-frame__player ${isReady ? "media-loaded" : "media-loading"}`}
         controls
         playsInline
         preload="metadata"
         aria-label={title}
+        onLoadedData={markReady}
       >
         <source src={src} type={mimeType} />
       </video>
@@ -458,16 +506,62 @@ function CaseVideo({
   );
 }
 
+const MOTION_PREFETCH_STAGGER_MS = 120;
+
+function prefetchMotionVideos(sources: ReadonlyArray<string>) {
+  const links: HTMLLinkElement[] = [];
+  const timeoutIds: number[] = [];
+
+  sources.forEach((source, index) => {
+    const timeoutId = window.setTimeout(() => {
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.as = "video";
+      link.href = source;
+      document.head.append(link);
+      links.push(link);
+    }, index * MOTION_PREFETCH_STAGGER_MS);
+    timeoutIds.push(timeoutId);
+  });
+
+  return () => {
+    timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    links.forEach((link) => link.remove());
+  };
+}
+
 function CaseMotionVideo({
   src,
   className,
   mimeType = "video/webm",
+  isPlaying = false,
+  isVisible = true,
+  keepLoaded = false,
+  mode = "preview",
 }: {
   src: string;
   className?: string;
   mimeType?: string;
+  isPlaying?: boolean;
+  isVisible?: boolean;
+  keepLoaded?: boolean;
+  mode?: "preview" | "lightbox";
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const loadedSrcRef = useRef<string | null>(null);
+  const shouldLoad = mode === "lightbox" ? isPlaying : isVisible;
+  const { isReady, markReady } = useMediaReady(src, shouldLoad);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !shouldLoad) {
+      return;
+    }
+
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      markReady();
+    }
+  }, [markReady, shouldLoad, src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -476,30 +570,90 @@ function CaseMotionVideo({
     }
 
     video.muted = true;
-    void video.play().catch(() => {
-      // Browsers may block autoplay until interaction; grid click still works.
-    });
-  }, [src]);
+
+    if (!shouldLoad) {
+      video.pause();
+      if (!keepLoaded && loadedSrcRef.current) {
+        video.removeAttribute("src");
+        video.load();
+        loadedSrcRef.current = null;
+      }
+      return;
+    }
+
+    if (loadedSrcRef.current !== src) {
+      video.src = src;
+      video.load();
+      loadedSrcRef.current = src;
+    }
+
+    if (!isPlaying) {
+      video.pause();
+      if (video.readyState >= 1) {
+        video.currentTime = 0.001;
+      }
+      return;
+    }
+
+    const element = video;
+
+    function playWhenBuffered() {
+      void element.play().catch(() => {
+        // Autoplay can be blocked until the user interacts with the page.
+      });
+    }
+
+    if (element.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      playWhenBuffered();
+      return;
+    }
+
+    element.addEventListener("canplay", playWhenBuffered, { once: true });
+
+    return () => {
+      element.removeEventListener("canplay", playWhenBuffered);
+    };
+  }, [shouldLoad, isPlaying, src, mode, keepLoaded]);
+
+  function showPosterFrame(video: HTMLVideoElement) {
+    if (isPlaying) {
+      return;
+    }
+
+    video.pause();
+    video.currentTime = 0.001;
+  }
+
+  function handleLoadedData(event: React.SyntheticEvent<HTMLVideoElement>) {
+    showPosterFrame(event.currentTarget);
+    markReady();
+  }
+
+  const preload =
+    mode === "lightbox"
+      ? "auto"
+      : shouldLoad && isPlaying
+        ? "auto"
+        : shouldLoad
+          ? "metadata"
+          : "none";
 
   return (
-    <video
-      ref={videoRef}
-      className={className}
-      src={src}
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="auto"
-      onLoadedData={(event) => {
-        event.currentTarget.muted = true;
-        void event.currentTarget.play().catch(() => {
-          // Keep the preview poster/background visible if autoplay is blocked.
-        });
-      }}
-    >
-      <source src={src} type={mimeType} />
-    </video>
+    <>
+      {shouldLoad && !isReady ? (
+        <MediaSkeleton className="absolute inset-0 z-[1] rounded-[inherit]" />
+      ) : null}
+      <video
+        ref={videoRef}
+        className={`${className ?? ""} ${isReady ? "media-loaded" : "media-loading"}`}
+        loop
+        muted
+        playsInline
+        preload={preload}
+        onLoadedMetadata={handleLoadedData}
+        onLoadedData={handleLoadedData}
+      />
+    </>
   );
 }
 
@@ -561,8 +715,6 @@ function CaseVideoLightbox({
   isClosing: boolean;
   onClose: () => void;
 }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -583,16 +735,6 @@ function CaseVideoLightbox({
     };
   }, [onClose]);
 
-  useEffect(() => {
-    const element = videoRef.current;
-    if (!element) {
-      return;
-    }
-
-    element.muted = true;
-    void element.play().catch(() => {});
-  }, [video.src]);
-
   return (
     <div
       className={`case-image-lightbox ${
@@ -612,6 +754,8 @@ function CaseVideoLightbox({
         <CaseMotionVideo
           src={video.src}
           mimeType={video.mimeType}
+          mode="lightbox"
+          isPlaying={!isClosing}
           className={`case-image-lightbox__image case-image-lightbox__video ${
             isClosing
               ? "case-image-lightbox__image--closing"
@@ -639,23 +783,62 @@ function MotionVideoTile({
   video,
   layout,
   onOpen,
+  autoPlayWhenVisible = false,
 }: {
   video: MotionVideo;
   layout: "wide" | "square";
   onOpen: (video: MotionVideo) => void;
+  autoPlayWhenVisible?: boolean;
 }) {
+  const tileRef = useRef<HTMLButtonElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isHoverPlaying, setIsHoverPlaying] = useState(false);
+  const isPlaying = autoPlayWhenVisible ? isVisible : isHoverPlaying;
+
+  useEffect(() => {
+    const element = tileRef.current;
+    if (!element) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+        if (!entry.isIntersecting) {
+          setIsHoverPlaying(false);
+        }
+      },
+      { rootMargin: "320px" },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   return (
     <button
+      ref={tileRef}
       type="button"
       className={`case-zoomable-video bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${
         layout === "wide" ? "case-motion-item--wide" : "case-motion-item--square"
       }`}
+      onMouseEnter={autoPlayWhenVisible ? undefined : () => setIsHoverPlaying(true)}
+      onMouseLeave={autoPlayWhenVisible ? undefined : () => setIsHoverPlaying(false)}
+      onFocus={autoPlayWhenVisible ? undefined : () => setIsHoverPlaying(true)}
+      onBlur={autoPlayWhenVisible ? undefined : () => setIsHoverPlaying(false)}
       onClick={() => onOpen(video)}
       aria-label={`Открыть на весь экран: ${video.title}`}
     >
       <CaseMotionVideo
         src={video.src}
         mimeType={video.mimeType}
+        mode="preview"
+        isVisible={isVisible}
+        isPlaying={isPlaying}
+        keepLoaded
         className="case-zoomable-video__player"
       />
     </button>
@@ -670,6 +853,10 @@ function CaseMotionGrid({
   const [lightboxVideo, setLightboxVideo] = useState<MotionVideo | null>(null);
   const [isLightboxClosing, setIsLightboxClosing] = useState(false);
   const lightboxCloseTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return prefetchMotionVideos(videos.map((video) => video.src));
+  }, [videos]);
 
   useEffect(() => {
     return () => {
@@ -710,6 +897,7 @@ function CaseMotionGrid({
             key={video.src}
             video={video}
             layout={getMotionVideoLayout(index)}
+            autoPlayWhenVisible
             onOpen={openLightbox}
           />
         ))}
@@ -1286,6 +1474,8 @@ function CaseImageLightbox({
   isClosing: boolean;
   onClose: () => void;
 }) {
+  const { isReady, markReady } = useMediaReady(image.src);
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -1319,6 +1509,12 @@ function CaseImageLightbox({
       onClick={onClose}
     >
       <div className="case-image-lightbox__frame">
+        {!isReady ? (
+          <MediaSkeleton
+            className="pointer-events-none absolute left-1/2 top-1/2 max-h-[88dvh] w-[min(92dvw,960px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl"
+            style={{ aspectRatio: `${image.width} / ${image.height}` }}
+          />
+        ) : null}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.src}
@@ -1326,10 +1522,14 @@ function CaseImageLightbox({
           width={image.width}
           height={image.height}
           className={`case-image-lightbox__image ${
+            isReady ? "media-loaded" : "media-loading"
+          } ${
             isClosing
               ? "case-image-lightbox__image--closing"
               : "case-image-lightbox__image--opening"
           }`}
+          onLoad={markReady}
+          onError={markReady}
           onClick={(event) => event.stopPropagation()}
         />
       </div>
@@ -1346,6 +1546,42 @@ function CaseImageLightbox({
         <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
       </button>
     </div>
+  );
+}
+
+function CaseGridImage({
+  image,
+  onOpen,
+}: {
+  image: CaseImage;
+  onOpen: (image: CaseImage) => void;
+}) {
+  const { isReady, markReady } = useMediaReady(image.src);
+
+  return (
+    <button
+      type="button"
+      className="case-zoomable-image relative overflow-hidden rounded-2xl bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+      style={{ aspectRatio: `${image.width} / ${image.height}` }}
+      onClick={() => onOpen(image)}
+      aria-label={`Открыть на весь экран: ${image.alt}`}
+    >
+      {!isReady ? (
+        <MediaSkeleton className="absolute inset-0 rounded-[inherit]" />
+      ) : null}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image.src}
+        alt={image.alt}
+        width={image.width}
+        height={image.height}
+        decoding="async"
+        loading="lazy"
+        className={isReady ? "media-loaded" : "media-loading"}
+        onLoad={markReady}
+        onError={markReady}
+      />
+    </button>
   );
 }
 
@@ -1366,23 +1602,11 @@ function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
             }
           >
             {group.images.map((image) => (
-              <button
+              <CaseGridImage
                 key={image.src}
-                type="button"
-                className="case-zoomable-image relative overflow-hidden rounded-2xl bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-                onClick={() => openLightbox(image)}
-                aria-label={`Открыть на весь экран: ${image.alt}`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.src}
-                  alt={image.alt}
-                  width={image.width}
-                  height={image.height}
-                  decoding="async"
-                  loading="lazy"
-                />
-              </button>
+                image={image}
+                onOpen={openLightbox}
+              />
             ))}
           </div>
         ))}
@@ -1458,6 +1682,7 @@ function ProfileAvatar({
   priority?: boolean;
 }) {
   const { openLightbox, lightboxPortal } = useCaseImageLightbox();
+  const { isReady, markReady } = useMediaReady(profileAvatarImage.src);
   const sizeClass =
     size === "sm" ? "size-14 min-[901px]:size-16" : "size-20";
   const imageSizes = size === "sm" ? "(max-width: 900px) 56px, 64px" : "80px";
@@ -1471,13 +1696,17 @@ function ProfileAvatar({
         onPointerDown={(event) => event.stopPropagation()}
         aria-label="Открыть фото на весь экран"
       >
+        {!isReady ? (
+          <MediaSkeleton className="absolute inset-0 rounded-full" />
+        ) : null}
         <Image
           src={profileAvatarImage.src}
           alt={profileAvatarImage.alt}
           fill
           priority={priority}
           sizes={imageSizes}
-          className="object-cover"
+          className={`object-cover ${isReady ? "media-loaded" : "media-loading"}`}
+          onLoad={markReady}
         />
       </button>
       {lightboxPortal}
