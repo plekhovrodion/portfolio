@@ -252,10 +252,6 @@ html {
   letter-spacing: -0.4px;
 }
 
-.case-insight p {
-  margin: 0;
-}
-
 .case-figma-embed {
   height: min(72vh, 680px);
   min-height: 560px;
@@ -310,17 +306,17 @@ html {
 }
 
 .profile-card {
-  z-index: 2;
+  z-index: 5;
   transform-origin: center center;
 }
 
 @media (min-width: 901px) {
   .desktop-file {
-    z-index: 4;
+    z-index: 1;
   }
 
   .desktop-files {
-    z-index: 4;
+    z-index: 1;
   }
 }
 
@@ -527,6 +523,7 @@ html {
 
   .profile-card {
     position: absolute;
+    z-index: 5;
     width: calc(100% - 28px);
     max-width: 520px;
     cursor: grab;
@@ -573,6 +570,7 @@ html {
 
   .desktop-file {
     position: absolute;
+    z-index: 1;
     width: min(128px, calc((100% - 28px) / 3));
     cursor: grab;
   }

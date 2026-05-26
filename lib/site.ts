@@ -29,7 +29,7 @@ export const siteConfig = {
   ogImage: withBasePath("/figma-profile-avatar.jpeg"),
 } as const;
 
-export const productionSiteUrl = "https://plekhovrodion.github.io/portfolio";
+export const productionSiteUrl = "https://plekhov.online";
 
 export function getSiteUrl() {
   if (process.env.NEXT_PUBLIC_SITE_URL) {

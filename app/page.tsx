@@ -101,7 +101,7 @@ const caseWindowTitles: Record<string, string> = {
   classes: "Статистика занятий",
   "ai-assistant": "ИИ-помощник в Лаборатории заданий",
   subscription: "Тарифы в Лаборатории заданий",
-  "vk-cart": "Тестовое задание VK Маркет · Корзина",
+  "vk-cart": "Корзина ВК Маркет",
 };
 
 const aboutMeHighlights = [
@@ -143,22 +143,41 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function getResponsivePosition(
-  position: Position,
-  stageSize: StageSize,
-  elementSize: StageSize,
-  minY = 0,
-) {
+function getCaseWindowSize(stageSize: StageSize) {
   return {
-    x: clamp(
-      (position.x / STAGE_WIDTH) * stageSize.width,
-      0,
-      Math.max(0, stageSize.width - elementSize.width),
-    ),
+    width: Math.min(CASE_WINDOW_WIDTH, stageSize.width),
+    height: Math.min(CASE_WINDOW_HEIGHT, stageSize.height - HEADER_HEIGHT),
+  };
+}
+
+function getCaseWindowPositionForCase(
+  caseId: string,
+  stageSize: StageSize,
+  files: readonly DesktopFile[],
+  cardPosition: Position,
+) {
+  if (stageSize.width <= MOBILE_LAYOUT_BREAKPOINT) {
+    return { x: 0, y: HEADER_HEIGHT };
+  }
+
+  const windowSize = getCaseWindowSize(stageSize);
+  let anchor = { x: 44, y: 68 };
+
+  if (caseId === "about-me") {
+    anchor = cardPosition;
+  } else {
+    const file = files.find((item) => item.id === caseId);
+    if (file) {
+      anchor = { x: file.x, y: file.y };
+    }
+  }
+
+  return {
+    x: clamp(anchor.x, 0, Math.max(0, stageSize.width - windowSize.width)),
     y: clamp(
-      (position.y / STAGE_HEIGHT) * stageSize.height,
-      minY,
-      Math.max(minY, stageSize.height - elementSize.height),
+      anchor.y,
+      HEADER_HEIGHT,
+      Math.max(HEADER_HEIGHT, stageSize.height - windowSize.height),
     ),
   };
 }
@@ -1135,17 +1154,6 @@ const vkCartScreens = [
   },
 ] as const satisfies ReadonlyArray<CaseImage>;
 
-function CaseInsight({ children }: { children: ReactNode }) {
-  return (
-    <aside className="case-insight flex gap-3 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-      <span aria-hidden="true" className="shrink-0 text-lg leading-6">
-        💡
-      </span>
-      <p>{children}</p>
-    </aside>
-  );
-}
-
 function CaseFigmaPrototype({
   title,
   prototypeUrl,
@@ -1975,7 +1983,7 @@ function VkCartCase() {
       <CaseImageGrid images={vkCartIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Тестовое задание VK Маркет · Корзина</h1>
+        <h1>Корзина ВК Маркет</h1>
       </section>
 
       <CaseSection title="Задача">
@@ -2033,23 +2041,23 @@ function VkCartCase() {
       </CaseSection>
 
       <CaseSection title="Выводы из исследования / Гипотезы">
-        <div className="flex flex-col gap-3">
-          <CaseInsight>
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>
             Большинство респондентов активно пользуются закладками / избранным.
-          </CaseInsight>
-          <CaseInsight>
+          </li>
+          <li>
             Самыми важными критериями являются: цена, отзывы, количество
             заказов.
-          </CaseInsight>
-          <CaseInsight>
+          </li>
+          <li>
             Чаще всего респонденты ждут, что им предложат альтернативные товары
             выбранным или дополнительные товары.
-          </CaseInsight>
-          <CaseInsight>
+          </li>
+          <li>
             Критерии, на которые респонденты обращают внимание при покупке:
             цена, чёткие фотографии, возможность выбора доставки.
-          </CaseInsight>
-        </div>
+          </li>
+        </ul>
       </CaseSection>
 
       <CaseImageGrid images={vkCartScreens} />
@@ -2354,17 +2362,6 @@ export default function Home() {
           desktopCardPosition,
         ),
       );
-      setCaseWindowPosition(
-        getResponsivePosition(
-          { x: 44, y: 68 },
-          nextStageSize,
-          {
-            width: Math.min(CASE_WINDOW_WIDTH, nextStageSize.width),
-            height: Math.min(CASE_WINDOW_HEIGHT, nextStageSize.height),
-          },
-          HEADER_HEIGHT,
-        ),
-      );
     };
 
     const animationFrameId = window.requestAnimationFrame(updateStageSize);
@@ -2561,9 +2558,13 @@ export default function Home() {
       closeWindowTimeoutRef.current = null;
     }
 
+    const currentStageSize = stageSizeRef.current;
+    const isMobile = currentStageSize.width <= MOBILE_LAYOUT_BREAKPOINT;
+
     setIsCaseWindowClosing(false);
-    setIsCaseWindowMaximized(
-      stageSizeRef.current.width <= MOBILE_LAYOUT_BREAKPOINT,
+    setIsCaseWindowMaximized(isMobile);
+    setCaseWindowPosition(
+      getCaseWindowPositionForCase(caseId, currentStageSize, files, cardPosition),
     );
     setActiveCaseId(caseId);
   }
