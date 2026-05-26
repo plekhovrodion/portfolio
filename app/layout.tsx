@@ -53,8 +53,8 @@ export const metadata: Metadata = {
     images: [siteConfig.ogImage],
   },
   icons: {
-    icon: [{ url: withBasePath("/figma-profile-avatar.jpeg"), type: "image/jpeg" }],
-    apple: withBasePath("/figma-profile-avatar.jpeg"),
+    icon: [{ url: withBasePath("/profile.png"), type: "image/jpeg" }],
+    apple: withBasePath("/profile.png"),
   },
 };
 

@@ -3,8 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowUpRight,
-  Info,
   Maximize2,
   Music,
   Pause,
@@ -15,7 +13,7 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactPortal } from "react";
 import { withBasePath } from "@/lib/site";
 import { createPortal } from "react-dom";
 
@@ -79,19 +77,16 @@ const MUSIC_BACKGROUND_VIDEO = withBasePath("/dancing-rat-chess-type-beat.webm")
 const vkCartFigmaPrototype =
   "https://www.figma.com/proto/1C93yxYA4hkGBogyImvYgE/%D0%A2%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5-VK-%D0%9C%D0%B0%D1%80%D0%BA%D0%B5%D1%82-%D0%9A%D0%BE%D1%80%D0%B7%D0%B8%D0%BD%D0%B0-%C2%B7-%D0%9F%D0%BB%D0%B5%D1%85%D0%BE%D0%B2-%D0%A0%D0%BE%D0%B4%D0%B8%D0%BE%D0%BD?node-id=2-8527&viewport=-7125%2C68%2C0.66&scaling=scale-down&starting-point-node-id=2%3A8527&show-proto-sidebar=1&page-id=0%3A1";
 
-const caseExternalLinks: Record<string, string> = {
-  "assistant-promo": "https://edu-assist.me/promo",
-  home: "https://edu-assist.ru/",
-  "vk-cart": vkCartFigmaPrototype,
-};
+const inlineLinkClassName =
+  "rounded-sm underline decoration-white/35 underline-offset-2 transition hover:text-white/80 hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
-  home: withBasePath("/cases/main/video.png"),
-  classes: withBasePath("/cases/statistic/metrics-overview.png"),
-  profile: withBasePath("/cases/profile/login-desktop.png"),
-  "ai-assistant": withBasePath("/cases/ai/home-desktop.png"),
-  subscription: withBasePath("/cases/subscribe/Тарифы.png"),
-  "vk-cart": withBasePath("/cases/cart/cover.png"),
+  home: withBasePath("/desktop-previews/home.png"),
+  classes: withBasePath("/desktop-previews/classes.png"),
+  profile: withBasePath("/desktop-previews/profile.png"),
+  "ai-assistant": withBasePath("/desktop-previews/ai-assistant.png"),
+  subscription: withBasePath("/desktop-previews/subscription.png"),
+  "vk-cart": withBasePath("/desktop-previews/vk-cart.png"),
 };
 
 const caseWindowTitles: Record<string, string> = {
@@ -104,23 +99,54 @@ const caseWindowTitles: Record<string, string> = {
   "vk-cart": "Корзина ВК Маркет",
 };
 
-const aboutMeHighlights = [
+type AboutMeHighlight = {
+  title: string;
+  description: string;
+  href?: string;
+};
+
+const aboutMeProductHighlights: ReadonlyArray<AboutMeHighlight> = [
+  {
+    title: "Ассистент преподавателя (2023–2026)",
+    description: "150к+ пользователей, 57 регионов РФ",
+    href: "https://edu-assist.me/promo",
+  },
+  {
+    title: "Единый профиль СберОбразования (2023–2024)",
+    description: "350к+ пользователей",
+    href: "https://app.edu-assist.me/profile",
+  },
+  {
+    title: "Лаборатория заданий (2025)",
+    description: "1000+ платящих после запуска подписок",
+    href: "https://edu-assist.ru/",
+  },
+  {
+    title: "UI Kit (2026)",
+    description: "темизация, покрытие 90% сценариев",
+  },
+  {
+    title: "ИИ-помощник (2026)",
+    description: "20к+ чатов",
+    href: "https://app.edu-assist.me/ai",
+  },
+];
+
+const aboutMeTeamHighlights: ReadonlyArray<AboutMeHighlight> = [
   {
     title: "Исследования",
     description:
-      "Внедрил в команду процесс немодерируемых исследований через PathWay",
+      "внедрил немодерируемые исследования через PathWay (команда 10+ чел.)",
   },
   {
     title: "Менторство",
-    description:
-      "Обучаю стажёров: собрал курс по дизайну, провожу митапы по сборке прототипов на Cursor",
+    description: "обучаю стажёров: курс по дизайну, митапы по Cursor",
   },
   {
     title: "Процессы",
-    description:
-      "Собрал шаблон сценариев и чек-лист проверки макетов перед передачей в разработку",
+    description: "создал чек‑лист проверки макетов и шаблон сценариев",
   },
-] as const;
+];
 
 const desktopFiles: DesktopFile[] = [
   { id: "home", label: "Главная", x: 289, y: 154 },
@@ -378,7 +404,7 @@ function DesktopFileIcon({
         {file.variant === "folder" ? (
           <div className="relative h-[72px] w-24 transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
             <Image
-              src={withBasePath("/icons/folder.png")}
+              src={withBasePath("/icons/folder.svg")}
               alt=""
               fill
               sizes="96px"
@@ -540,6 +566,8 @@ function CaseVideoLightbox({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
         event.stopImmediatePropagation();
         onClose();
       }
@@ -547,11 +575,11 @@ function CaseVideoLightbox({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true);
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
     };
   }, [onClose]);
 
@@ -577,17 +605,6 @@ function CaseVideoLightbox({
       aria-label={video.title}
       onClick={onClose}
     >
-      <button
-        type="button"
-        aria-label="Закрыть просмотр видео"
-        className="case-image-lightbox__close grid size-10 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-        onClick={(event) => {
-          event.stopPropagation();
-          onClose();
-        }}
-      >
-        <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
-      </button>
       <div
         className="case-image-lightbox__frame"
         onClick={(event) => event.stopPropagation()}
@@ -602,6 +619,18 @@ function CaseVideoLightbox({
           }`}
         />
       </div>
+      <button
+        type="button"
+        aria-label="Закрыть просмотр видео"
+        className="case-image-lightbox__close grid size-10 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
+      </button>
     </div>
   );
 }
@@ -740,6 +769,13 @@ type CaseImage = {
   width: number;
   height: number;
   layout?: "solo";
+};
+
+const profileAvatarImage: CaseImage = {
+  src: withBasePath("/profile.png"),
+  alt: "Родион Плехов",
+  width: 640,
+  height: 640,
 };
 
 type CaseImageGroup =
@@ -1181,10 +1217,64 @@ function CaseFigmaPrototype({
         className="inline-flex w-fit items-center gap-1.5 rounded-sm text-base font-semibold leading-6 tracking-[-0.2px] text-white/86 underline decoration-white/35 underline-offset-2 transition hover:text-white hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
       >
         Открыть прототип в Figma
-        <ArrowUpRight aria-hidden="true" className="size-4" strokeWidth={2.1} />
       </a>
     </section>
   );
+}
+
+function useCaseImageLightbox() {
+  const [lightboxImage, setLightboxImage] = useState<CaseImage | null>(null);
+  const [isLightboxClosing, setIsLightboxClosing] = useState(false);
+  const lightboxCloseTimeoutRef = useRef<number | null>(null);
+  const lightboxImageRef = useRef<CaseImage | null>(null);
+  const isLightboxClosingRef = useRef(false);
+
+  lightboxImageRef.current = lightboxImage;
+  isLightboxClosingRef.current = isLightboxClosing;
+
+  useEffect(() => {
+    return () => {
+      if (lightboxCloseTimeoutRef.current) {
+        window.clearTimeout(lightboxCloseTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const openLightbox = useCallback((image: CaseImage) => {
+    if (lightboxCloseTimeoutRef.current) {
+      window.clearTimeout(lightboxCloseTimeoutRef.current);
+      lightboxCloseTimeoutRef.current = null;
+    }
+
+    setIsLightboxClosing(false);
+    setLightboxImage(image);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    if (!lightboxImageRef.current || isLightboxClosingRef.current) {
+      return;
+    }
+
+    setIsLightboxClosing(true);
+    lightboxCloseTimeoutRef.current = window.setTimeout(() => {
+      setLightboxImage(null);
+      setIsLightboxClosing(false);
+      lightboxCloseTimeoutRef.current = null;
+    }, CASE_LIGHTBOX_ANIMATION_MS);
+  }, []);
+
+  const lightboxPortal: ReactPortal | null = lightboxImage
+    ? createPortal(
+        <CaseImageLightbox
+          image={lightboxImage}
+          isClosing={isLightboxClosing}
+          onClose={closeLightbox}
+        />,
+        document.body,
+      )
+    : null;
+
+  return { openLightbox, lightboxPortal };
 }
 
 function CaseImageLightbox({
@@ -1199,6 +1289,8 @@ function CaseImageLightbox({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
         event.stopImmediatePropagation();
         onClose();
       }
@@ -1206,11 +1298,11 @@ function CaseImageLightbox({
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown, true);
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, true);
     };
   }, [onClose]);
 
@@ -1226,21 +1318,7 @@ function CaseImageLightbox({
       aria-label={image.alt}
       onClick={onClose}
     >
-      <button
-        type="button"
-        aria-label="Закрыть просмотр изображения"
-        className="case-image-lightbox__close grid size-10 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-        onClick={(event) => {
-          event.stopPropagation();
-          onClose();
-        }}
-      >
-        <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
-      </button>
-      <div
-        className="case-image-lightbox__frame"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="case-image-lightbox__frame">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.src}
@@ -1252,48 +1330,27 @@ function CaseImageLightbox({
               ? "case-image-lightbox__image--closing"
               : "case-image-lightbox__image--opening"
           }`}
+          onClick={(event) => event.stopPropagation()}
         />
       </div>
+      <button
+        type="button"
+        aria-label="Закрыть просмотр изображения"
+        className="case-image-lightbox__close grid size-10 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => {
+          event.stopPropagation();
+          onClose();
+        }}
+      >
+        <X aria-hidden="true" className="size-5" strokeWidth={2.2} />
+      </button>
     </div>
   );
 }
 
 function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
-  const [lightboxImage, setLightboxImage] = useState<CaseImage | null>(null);
-  const [isLightboxClosing, setIsLightboxClosing] = useState(false);
-  const lightboxCloseTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (lightboxCloseTimeoutRef.current) {
-        window.clearTimeout(lightboxCloseTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  function openLightbox(image: CaseImage) {
-    if (lightboxCloseTimeoutRef.current) {
-      window.clearTimeout(lightboxCloseTimeoutRef.current);
-      lightboxCloseTimeoutRef.current = null;
-    }
-
-    setIsLightboxClosing(false);
-    setLightboxImage(image);
-  }
-
-  function closeLightbox() {
-    if (!lightboxImage || isLightboxClosing) {
-      return;
-    }
-
-    setIsLightboxClosing(true);
-    lightboxCloseTimeoutRef.current = window.setTimeout(() => {
-      setLightboxImage(null);
-      setIsLightboxClosing(false);
-      lightboxCloseTimeoutRef.current = null;
-    }, CASE_LIGHTBOX_ANIMATION_MS);
-  }
-
+  const { openLightbox, lightboxPortal } = useCaseImageLightbox();
   const groups = groupCaseImages(images);
 
   return (
@@ -1330,16 +1387,7 @@ function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
           </div>
         ))}
       </div>
-      {lightboxImage
-        ? createPortal(
-            <CaseImageLightbox
-              image={lightboxImage}
-              isClosing={isLightboxClosing}
-              onClose={closeLightbox}
-            />,
-            document.body,
-          )
-        : null}
+      {lightboxPortal}
     </>
   );
 }
@@ -1362,57 +1410,200 @@ function CaseSection({
 const aboutMeContactButtonClassName =
   "inline-flex items-center justify-center rounded-full bg-white/10 px-5 py-2.5 text-base font-semibold leading-6 tracking-[-0.2px] text-[#fafafa] transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
 
+function AboutMeContacts() {
+  return (
+    <nav
+      aria-label="Контакты и портфолио"
+      className="case-section mx-auto flex w-full flex-wrap items-center gap-3"
+    >
+      <a
+        href="https://t.me/r_plekhov"
+        target="_blank"
+        rel="noreferrer"
+        className={aboutMeContactButtonClassName}
+      >
+        Telegram
+      </a>
+      <a
+        href="mailto:r_plekhov@icloud.com"
+        className={aboutMeContactButtonClassName}
+      >
+        Почта
+      </a>
+      <a
+        href="https://vk.com/plekhovrodion"
+        target="_blank"
+        rel="noreferrer"
+        className={aboutMeContactButtonClassName}
+      >
+        ВК
+      </a>
+      <a
+        href="https://www.behance.net/plekhovrodion"
+        target="_blank"
+        rel="noreferrer"
+        className={aboutMeContactButtonClassName}
+      >
+        Behance
+      </a>
+    </nav>
+  );
+}
+
+function ProfileAvatar({
+  size = "sm",
+  priority = false,
+}: {
+  size?: "sm" | "md";
+  priority?: boolean;
+}) {
+  const { openLightbox, lightboxPortal } = useCaseImageLightbox();
+  const sizeClass =
+    size === "sm" ? "size-14 min-[901px]:size-16" : "size-20";
+  const imageSizes = size === "sm" ? "(max-width: 900px) 56px, 64px" : "80px";
+
+  return (
+    <>
+      <button
+        type="button"
+        className={`relative ${sizeClass} shrink-0 cursor-zoom-in overflow-hidden rounded-full bg-white transition hover:ring-2 hover:ring-white/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70`}
+        onClick={() => openLightbox(profileAvatarImage)}
+        onPointerDown={(event) => event.stopPropagation()}
+        aria-label="Открыть фото на весь экран"
+      >
+        <Image
+          src={profileAvatarImage.src}
+          alt={profileAvatarImage.alt}
+          fill
+          priority={priority}
+          sizes={imageSizes}
+          className="object-cover"
+        />
+      </button>
+      {lightboxPortal}
+    </>
+  );
+}
+
 function AboutMeCase() {
   return (
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-full bg-white">
-          <Image
-            src={withBasePath("/figma-profile-avatar.jpeg")}
-            alt=""
-            fill
-            sizes="80px"
-            className="object-cover"
-          />
-        </div>
+        <ProfileAvatar size="md" />
         <h1>Родион Плехов</h1>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Продуктовый дизайнер в СберОбразовании. Более 4 лет разрабатываю B2C
-          и B2B системы, сервисы и приложения.
+          Продуктовый дизайнер в{" "}
+          <a
+            href="https://sbereducation.ru/"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            СберОбразовании
+          </a>{" "}
+          Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения
         </p>
       </section>
 
+      <AboutMeContacts />
+
       <CaseSection title="Достижения">
-        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          {aboutMeHighlights.map((item) => (
-            <li key={item.title}>
-              <span className="font-semibold">{item.title}.</span> {item.description}
-            </li>
-          ))}
-        </ul>
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="case-description text-base font-semibold leading-6 tracking-[-0.2px] text-white/92">
+              Достижения продуктов:
+            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+              {aboutMeProductHighlights.map((item) => (
+                <li key={item.title}>
+                  <span className="font-semibold">
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={inlineLinkClassName}
+                        onPointerDown={(event) => event.stopPropagation()}
+                      >
+                        {item.title}:
+                      </a>
+                    ) : (
+                      `${item.title}:`
+                    )}
+                  </span>{" "}
+                  {item.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="case-description text-base font-semibold leading-6 tracking-[-0.2px] text-white/92">
+              Достижения в команде:
+            </p>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+              {aboutMeTeamHighlights.map((item) => (
+                <li key={item.title}>
+                  <span className="font-semibold">{item.title}:</span>{" "}
+                  {item.description}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </CaseSection>
 
-      <nav
-        aria-label="Контакты и портфолио"
-        className="case-section mx-auto mt-auto flex w-full flex-wrap items-center gap-3"
-      >
-        <a
-          href="https://t.me/r_plekhov"
-          target="_blank"
-          rel="noreferrer"
-          className={aboutMeContactButtonClassName}
-        >
-          Telegram
-        </a>
-        <a
-          href="https://www.behance.net/plekhovrodion"
-          target="_blank"
-          rel="noreferrer"
-          className={aboutMeContactButtonClassName}
-        >
-          Behance
-        </a>
-      </nav>
+      <CaseSection title="Опыт работы">
+        <ul className="space-y-4 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>
+            <p className="font-semibold text-white/92">
+              <a
+                href="https://sbereducation.ru/"
+                target="_blank"
+                rel="noreferrer"
+                className={inlineLinkClassName}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                СберОбразование
+              </a>
+            </p>
+            <p>Продуктовый дизайнер · Июль 2023 — сейчас (2 года и 11 месяцев)</p>
+          </li>
+          <li>
+            <p className="font-semibold text-white/92">AINSYS</p>
+            <p>Продуктовый дизайнер · 2 года и 3 месяца</p>
+          </li>
+          <li>
+            <p className="font-semibold text-white/92">
+              <a
+                href="https://gpbl.ru/"
+                target="_blank"
+                rel="noreferrer"
+                className={inlineLinkClassName}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                Газпромбанк Лизинг, ЗАО
+              </a>
+            </p>
+            <p>Графический дизайнер · Июнь 2021 — Июнь 2023 (2 года и 1 месяц)</p>
+          </li>
+          <li>
+            <p className="font-semibold text-white/92">
+              <a
+                href="https://m1casino.ru/"
+                target="_blank"
+                rel="noreferrer"
+                className={inlineLinkClassName}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                Казино М1
+              </a>
+            </p>
+            <p>Графический дизайнер · Март 2021 — Май 2022 (1 год и 3 месяца)</p>
+          </li>
+        </ul>
+      </CaseSection>
     </div>
   );
 }
@@ -1423,10 +1614,30 @@ function UnifiedProfileCase() {
       <CaseImageGrid images={profileIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Единый профиль для сервисов СберОбразования</h1>
+        <h1>
+          <a
+            href="https://app.edu-assist.me/profile"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            Единый профиль для сервисов СберОбразования
+          </a>
+        </h1>
         <h2>Контекст</h2>
         <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
-          У СберОбразования было четыре независимых продукта, каждый со своим:
+          У{" "}
+          <a
+            href="https://sbereducation.ru/"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            СберОбразования
+          </a>{" "}
+          было четыре независимых продукта, каждый со своим:
         </p>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>входом и регистрацией</li>
@@ -1436,16 +1647,16 @@ function UnifiedProfileCase() {
         </ul>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Команда тратила много времени на поддержку четырёх разных систем, а
-          пользователи путались и теряли доступ.
+          пользователи путались и теряли доступ
         </p>
       </section>
 
       <CaseSection title="Результаты">
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>количество обращений по входу снизилось на 28%</li>
-          <li>повторные обращения уменьшились на 35%</li>
-          <li>время обработки тикетов сократилось на 18%</li>
-          <li>конверсия в регистрацию выросла с 62% до 74%</li>
+          <li>обращения по входу: −28%</li>
+          <li>повторные обращения: −35%</li>
+          <li>время обработки тикетов: −18%</li>
+          <li>конверсия в регистрацию: 62% → 74%</li>
         </ul>
       </CaseSection>
 
@@ -1535,7 +1746,7 @@ function UnifiedProfileCase() {
 
       <CaseSection title="CJM">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Построил путь пользователя от входа до заполнения профиля.
+          Построил путь пользователя от входа до заполнения профиля
         </p>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Нашёл узкие места:
@@ -1582,7 +1793,17 @@ function HomePageCase() {
       <CaseImageGrid images={homeIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Главная страница Лаборатории заданий</h1>
+        <h1>
+          <a
+            href="https://edu-assist.ru/"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            Главная страница Лаборатории заданий
+          </a>
+        </h1>
         <h2>Контекст</h2>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Платформа позволяет репетиторам:
@@ -1684,13 +1905,23 @@ function AiAssistantCase() {
       <CaseImageGrid images={aiIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>ИИ-помощник в Лаборатории заданий</h1>
+        <h1>
+          <a
+            href="https://app.edu-assist.me/ai"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            ИИ-помощник в Лаборатории заданий
+          </a>
+        </h1>
       </section>
 
       <CaseSection title="Задача">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Спроектировать ИИ-помощника для ученика и учителя: сценарии,
-          ветки диалога и интерфейс чата под разные запросы.
+          ветки диалога и интерфейс чата под разные запросы
         </p>
       </CaseSection>
 
@@ -1699,7 +1930,6 @@ function AiAssistantCase() {
           <li>20 600 чатов</li>
           <li>5,9 сообщений на диалог</li>
           <li>~3 минуты в чате</li>
-          <li>аудитория +28%</li>
         </ul>
       </CaseSection>
 
@@ -1719,36 +1949,45 @@ function ClassesStatisticsCase() {
         <h1>Статистика занятий</h1>
         <h2>Контекст</h2>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Ассистент преподавателя анализирует уроки и даёт:
+          <a
+            href="https://edu-assist.me/promo"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            Ассистент преподавателя
+          </a>{" "}
+          анализирует уроки и даёт:
         </p>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>динамику метрик,</li>
-          <li>рекомендации по улучшению,</li>
-          <li>распознавание эмоций,</li>
-          <li>речевую аналитику.</li>
+          <li>динамику метрик</li>
+          <li>рекомендации по улучшению</li>
+          <li>распознавание эмоций</li>
+          <li>речевую аналитику</li>
         </ul>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Но преподаватели не могли{" "}
           <strong className="font-semibold text-white/92">
             посмотреть, как меняются их показатели со временем
           </strong>
-          , и не понимали, улучшается ли их преподавание.
+          , и не понимали, улучшается ли их преподавание
         </p>
       </section>
 
       <CaseSection title="Проблема">
         <blockquote className="case-lead border-l-2 border-white/30 pl-4 text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
           Преподаватель не может увидеть, как меняются его метрики и приёмы
-          преподавания в динамике.
+          преподавания в динамике
         </blockquote>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Пользователи:
         </p>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>не понимают, что означает каждая метрика,</li>
-          <li>путаются в периодах сравнения,</li>
-          <li>не могут выбрать предмет или параллель,</li>
-          <li>не могут сравнить уроки между собой.</li>
+          <li>не понимают, что означает каждая метрика</li>
+          <li>путаются в периодах сравнения</li>
+          <li>не могут выбрать предмет или параллель</li>
+          <li>не могут сравнить уроки между собой</li>
         </ul>
       </CaseSection>
 
@@ -1758,7 +1997,7 @@ function ClassesStatisticsCase() {
           <strong className="font-semibold text-white/92">
             анализировать динамику метрик по загруженным урокам
           </strong>
-          , понимать прогресс и корректировать методы преподавания.
+          , понимать прогресс и корректировать методы преподавания
         </p>
       </CaseSection>
 
@@ -1769,19 +2008,19 @@ function ClassesStatisticsCase() {
               Я хочу видеть изменения ключевых метрик
             </strong>
             , чтобы понимать, как мои методы преподавания влияют на процесс
-            обучения.
+            обучения
           </li>
           <li>
             <strong className="font-semibold text-white/92">
               Я хочу фильтровать предметы и параллели
             </strong>
-            , чтобы понимать, где у меня проседают результаты.
+            , чтобы понимать, где у меня проседают результаты
           </li>
           <li>
             <strong className="font-semibold text-white/92">
               Я хочу выбирать свои периоды анализа
             </strong>
-            , чтобы выявлять слабые места и корректировать стиль преподавания.
+            , чтобы выявлять слабые места и корректировать стиль преподавания
           </li>
         </ul>
       </CaseSection>
@@ -1790,26 +2029,26 @@ function ClassesStatisticsCase() {
 
       <CaseSection title="UX‑исследование">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Провели интервью и тестирование с преподавателями.
+          Провели интервью и тестирование с преподавателями
         </p>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <strong className="font-semibold text-white/92">Что узнали:</strong>
         </p>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>пользователям нравится идея динамики метрик;</li>
-          <li>им интересно видеть прогресс;</li>
+          <li>пользователям нравится идея динамики метрик</li>
+          <li>им интересно видеть прогресс</li>
           <li>
-            но они <strong className="font-semibold text-white/92">путаются в интерпретации показателей</strong>;
+            но они <strong className="font-semibold text-white/92">путаются в интерпретации показателей</strong>
           </li>
           <li>
-            не понимают, что сравнивается: среднее? последний урок? период?;
+            не понимают, что сравнивается: среднее? последний урок? период?
           </li>
           <li>
-            хотят сравнивать <strong className="font-semibold text-white/92">последний урок с предыдущим</strong>;
+            хотят сравнивать <strong className="font-semibold text-white/92">последний урок с предыдущим</strong>
           </li>
           <li>
             хотят видеть <strong className="font-semibold text-white/92">только важные метрики</strong>, а не всё
-            подряд.
+            подряд
           </li>
         </ul>
       </CaseSection>
@@ -1823,7 +2062,17 @@ function SubscriptionCase() {
       <CaseImageGrid images={subscriptionIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Тарифы в Лаборатории заданий</h1>
+        <h1>
+          <a
+            href="https://edu-assist.ru/"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            Тарифы в Лаборатории заданий
+          </a>
+        </h1>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Чтобы масштабировать продукт и монетизацию, команда решила:
         </p>
@@ -1896,7 +2145,7 @@ function SubscriptionCase() {
           <li>уведомления о лимитах</li>
         </ul>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Это снижает фрустрацию и повышает конверсию.
+          Это снижает фрустрацию и повышает конверсию
         </p>
 
         <h4>Ограничения бесплатного тарифа должны быть видимыми</h4>
@@ -1936,43 +2185,6 @@ function SubscriptionCase() {
       <CaseImageGrid images={subscriptionManagementScreens} />
 
       <CaseImageGrid images={subscriptionPaymentScreens} />
-
-      <CaseSection title="Результаты">
-        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>
-            конверсия в просмотр тарифов:{" "}
-            <strong className="font-semibold text-white/92">+38%</strong>
-          </li>
-          <li>
-            конверсия в покупку:{" "}
-            <strong className="font-semibold text-white/92">+21%</strong>
-          </li>
-          <li>
-            уменьшение обращений в поддержку по подпискам:{" "}
-            <strong className="font-semibold text-white/92">–29%</strong>
-          </li>
-          <li>
-            рост апгрейдов тарифов:{" "}
-            <strong className="font-semibold text-white/92">+14%</strong>
-          </li>
-          <li>
-            рост продлений подписки:{" "}
-            <strong className="font-semibold text-white/92">+11%</strong>
-          </li>
-          <li>
-            снижение отмен подписки:{" "}
-            <strong className="font-semibold text-white/92">–8%</strong>
-          </li>
-          <li>
-            CTR на уведомления о лимитах:{" "}
-            <strong className="font-semibold text-white/92">+44%</strong>
-          </li>
-          <li>
-            конверсия из уведомления в покупку:{" "}
-            <strong className="font-semibold text-white/92">+26%</strong>
-          </li>
-        </ul>
-      </CaseSection>
     </div>
   );
 }
@@ -1983,23 +2195,42 @@ function VkCartCase() {
       <CaseImageGrid images={vkCartIntroImage} />
 
       <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>Корзина ВК Маркет</h1>
+        <h1>
+          <a
+            href="https://vk.com/market"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            Корзина ВК Маркет
+          </a>
+        </h1>
       </section>
 
       <CaseSection title="Задача">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Сделать редизайн страницы корзины приложения VK Маркет.
+          Сделать редизайн страницы корзины приложения{" "}
+          <a
+            href="https://vk.com/market"
+            target="_blank"
+            rel="noreferrer"
+            className={inlineLinkClassName}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            VK Маркет
+          </a>
         </p>
       </CaseSection>
 
       <CaseSection title="Личные цели">
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>Выполнить задачу за максимально короткий срок — 16 часов.</li>
+          <li>Выполнить задачу за максимально короткий срок — 16 часов</li>
           <li>
             Использовать библиотеку VKUI, позволяющую максимально эффективно
-            сэкономить время.
+            сэкономить время
           </li>
-          <li>Объяснять каждый шаг — почему так было сделано.</li>
+          <li>Объяснять каждый шаг — почему так было сделано</li>
         </ul>
       </CaseSection>
 
@@ -2007,13 +2238,13 @@ function VkCartCase() {
         <h4>Анализ конкурентов и наблюдение</h4>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           По модели КАНО выделил основные атрибуты корзины конкурентов и
-          структурировал информацию.
+          структурировал информацию
         </p>
 
         <h4>Интервью</h4>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Провёл три глубинных интервью с пользователями маркетплейсов. В
-          выборке были как те, кто пользовался Маркетом, так и нет.
+          Провёл три глубинных интервью с пользователями маркетплейсов В
+          выборке были как те, кто пользовался Маркетом, так и нет
         </p>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <strong className="font-semibold text-white/92">
@@ -2026,7 +2257,7 @@ function VkCartCase() {
           </li>
           <li>
             Попробуйте вспомнить последний раз, когда процесс оформления покупки
-            по какой-то причине не мог быть завершён. Что вы чувствовали в этот
+            по какой-то причине не мог быть завершён Что вы чувствовали в этот
             момент?
           </li>
           <li>
@@ -2043,19 +2274,19 @@ function VkCartCase() {
       <CaseSection title="Выводы из исследования / Гипотезы">
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>
-            Большинство респондентов активно пользуются закладками / избранным.
+            Большинство респондентов активно пользуются закладками / избранным
           </li>
           <li>
             Самыми важными критериями являются: цена, отзывы, количество
-            заказов.
+            заказов
           </li>
           <li>
             Чаще всего респонденты ждут, что им предложат альтернативные товары
-            выбранным или дополнительные товары.
+            выбранным или дополнительные товары
           </li>
           <li>
             Критерии, на которые респонденты обращают внимание при покупке:
-            цена, чёткие фотографии, возможность выбора доставки.
+            цена, чёткие фотографии, возможность выбора доставки
           </li>
         </ul>
       </CaseSection>
@@ -2081,14 +2312,16 @@ function AssistantPromoCase() {
 
       <CaseSection title="Задача">
         <p className="case-description case-body text-base font-normal leading-6 tracking-[-0.2px]">
-          В кратчайшие сроки сделать промо Ассистента преподавателя на конференцию{" "}          <a
+          В кратчайшие сроки сделать промо Ассистента преподавателя на конференцию{" "}
+          <a
             href="https://cipr.ru/"
             target="_blank"
             rel="noreferrer"
             className="rounded-sm underline decoration-white/35 underline-offset-2 transition hover:text-white/80 hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
           >
             ЦИПР
-          </a>{" "}. Сделал за 3 дня. Увидели более 3000 человек.
+          </a>
+          , сделал за 3 дня, увидели более 3000 человек
         </p>
       </CaseSection>
 
@@ -2109,8 +2342,8 @@ function CasePlaceholder({ title }: { title: string }) {
           Описание и фотографии
         </p>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px]">
-          Здесь будет подробное описание проекта, задачи, решения и результата.
-          Фотографии и материалы можно будет добавить позже.
+          Здесь будет подробное описание проекта, задачи, решения и результата
+          Фотографии и материалы можно будет добавить позже
         </p>
       </div>
 
@@ -2196,7 +2429,7 @@ function CaseWindow({
           <button
             type="button"
             aria-label="Закрыть окно"
-            className="window-control-dot size-3.5 rounded-full bg-[#ff5c5f]"
+            className="window-control-dot window-control-dot--close size-3.5 rounded-full bg-[#ff5c5f]"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={onClose}
           />
@@ -2218,51 +2451,6 @@ function CaseWindow({
         <p className="min-w-0 flex-1 truncate text-base font-semibold leading-6 tracking-[-0.2px] text-[#fafafa]">
           {title}
         </p>
-        <div className="flex shrink-0 items-center rounded-full bg-white/10 p-[3px]">
-          <button
-            type="button"
-            aria-label="Информация о кейсе"
-            className="case-window-action grid size-8 place-items-center rounded-full text-white/90 transition hover:bg-white/10"
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <Info
-              aria-hidden="true"
-              className="size-5"
-              strokeWidth={2.1}
-            />
-          </button>
-          {caseId !== "about-me" ? (
-            caseExternalLinks[caseId] ? (
-              <a
-                href={caseExternalLinks[caseId]}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Открыть проект в браузере"
-                className="case-window-action grid size-8 place-items-center rounded-full text-white/90 transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                <ArrowUpRight
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.1}
-                />
-              </a>
-            ) : (
-              <button
-                type="button"
-                aria-label="Открыть кейс"
-                className="case-window-action grid size-8 place-items-center rounded-full text-white/90 transition hover:bg-white/10"
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                <ArrowUpRight
-                  aria-hidden="true"
-                  className="size-5"
-                  strokeWidth={2.1}
-                />
-              </button>
-            )
-          ) : null}
-        </div>
       </header>
 
       {caseId === "about-me" ? (
@@ -2533,17 +2721,25 @@ export default function Home() {
 
   function stopDrag() {
     const currentDragState = dragStateRef.current;
+    const shouldOpenTarget = !dragMovedRef.current ? currentDragState : null;
 
-    if (!dragMovedRef.current && currentDragState) {
+    if (shouldOpenTarget) {
       if (
-        currentDragState.target.type === "file" &&
-        activeCaseId !== currentDragState.target.id
+        shouldOpenTarget.target.type === "file" &&
+        activeCaseId !== shouldOpenTarget.target.id
       ) {
-        showCaseWindow(currentDragState.target.id);
+        const caseId = shouldOpenTarget.target.id;
+        // Defer until after the synthesized click so mobile taps do not
+        // hit controls rendered inside the newly opened case window.
+        window.setTimeout(() => {
+          showCaseWindow(caseId);
+        }, 0);
       }
 
-      if (currentDragState.target.type === "card") {
-        showCaseWindow("about-me");
+      if (shouldOpenTarget.target.type === "card") {
+        window.setTimeout(() => {
+          showCaseWindow("about-me");
+        }, 0);
       }
     }
 
@@ -2589,9 +2785,15 @@ export default function Home() {
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        hideCaseWindow();
+      if (event.key !== "Escape") {
+        return;
       }
+
+      if (document.querySelector(".case-image-lightbox")) {
+        return;
+      }
+
+      hideCaseWindow();
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -2777,16 +2979,7 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-white">
-            <Image
-              src={withBasePath("/figma-profile-avatar.jpeg")}
-              alt="Родион Плехов"
-              fill
-              priority
-              sizes="56px"
-              className="object-cover"
-            />
-          </div>
+          <ProfileAvatar priority />
 
           <div className="flex w-full flex-col gap-2">
             <h1>Родион Плехов</h1>
@@ -2800,8 +2993,8 @@ export default function Home() {
                 onPointerDown={(event) => event.stopPropagation()}
               >
                 СберОбразовании
-              </a>
-              . Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения
+              </a>{" "}
+              Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения
             </p>
           </div>
         </article>

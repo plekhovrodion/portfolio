@@ -475,6 +475,7 @@ html {
   justify-content: center;
   height: 100dvh;
   width: 100dvw;
+  pointer-events: none;
 }
 
 .case-image-lightbox__image {
@@ -484,6 +485,7 @@ html {
   width: auto;
   height: auto;
   object-fit: contain;
+  pointer-events: auto;
 }
 
 .case-image-lightbox__image--opening {
@@ -495,10 +497,11 @@ html {
 }
 
 .case-image-lightbox__close {
-  position: absolute;
+  position: fixed;
   top: max(16px, env(safe-area-inset-top, 0px));
   right: max(16px, env(safe-area-inset-right, 0px));
-  z-index: 1;
+  z-index: 101;
+  pointer-events: auto;
 }
 
 @media (max-width: 900px) {
@@ -598,6 +601,12 @@ html {
     max-width: 100%;
     width: 100% !important;
     padding: var(--case-padding);
+  }
+
+  .window-control-dot--close {
+    box-sizing: content-box;
+    margin: -15px;
+    padding: 15px;
   }
 
   .case-content {
