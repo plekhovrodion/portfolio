@@ -1651,15 +1651,6 @@ function UnifiedProfileCase() {
         </p>
       </section>
 
-      <CaseSection title="Результаты">
-        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>обращения по входу: −28%</li>
-          <li>повторные обращения: −35%</li>
-          <li>время обработки тикетов: −18%</li>
-          <li>конверсия в регистрацию: 62% → 74%</li>
-        </ul>
-      </CaseSection>
-
       <CaseSection title="Цель проекта">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Создать единый аккаунт для всех сервисов, чтобы:
