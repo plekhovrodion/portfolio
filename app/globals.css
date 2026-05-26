@@ -603,12 +603,6 @@ html {
     padding: var(--case-padding);
   }
 
-  .window-control-dot--close {
-    box-sizing: content-box;
-    margin: -15px;
-    padding: 15px;
-  }
-
   .case-content {
     scrollbar-gutter: auto;
   }

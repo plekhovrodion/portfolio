@@ -2420,7 +2420,7 @@ function CaseWindow({
           <button
             type="button"
             aria-label="Закрыть окно"
-            className="window-control-dot window-control-dot--close size-3.5 rounded-full bg-[#ff5c5f]"
+            className="window-control-dot size-3.5 rounded-full bg-[#ff5c5f]"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={onClose}
           />
