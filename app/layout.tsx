@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { YandexMetrika } from "@/components/yandex-metrika";
-import { getSiteUrl, siteConfig } from "@/lib/site";
+import { getSiteUrl, siteConfig, withBasePath } from "@/lib/site";
 import "./globals.css";
 
 const siteUrl = getSiteUrl();
@@ -53,8 +53,8 @@ export const metadata: Metadata = {
     images: [siteConfig.ogImage],
   },
   icons: {
-    icon: [{ url: "/figma-profile-avatar.jpeg", type: "image/jpeg" }],
-    apple: "/figma-profile-avatar.jpeg",
+    icon: [{ url: withBasePath("/figma-profile-avatar.jpeg"), type: "image/jpeg" }],
+    apple: withBasePath("/figma-profile-avatar.jpeg"),
   },
 };
 
@@ -74,7 +74,7 @@ const portfolioJsonLd = {
       jobTitle: "Дизайнер интерфейсов",
       description: siteConfig.description,
       url: siteUrl,
-      image: `${siteUrl}${siteConfig.ogImage}`,
+      image: new URL(siteConfig.ogImage, `${siteUrl}/`).href,
       sameAs: [siteConfig.telegram, siteConfig.behance, siteConfig.employer],
       worksFor: {
         "@type": "Organization",
