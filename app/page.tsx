@@ -14,6 +14,10 @@ import type {
   ReactNode,
 } from "react";
 import { useCallback, useEffect, useRef, useState, type ReactPortal } from "react";
+import {
+  SitePreloaderOverlay,
+  useSitePreloader,
+} from "@/components/site-preloader";
 import { withBasePath } from "@/lib/site";
 import { createPortal } from "react-dom";
 
@@ -2709,6 +2713,8 @@ export default function Home() {
   const stageRef = useRef<HTMLElement>(null);
   const backgroundVideoRef = useRef<HTMLVideoElement>(null);
   const musicVideoRef = useRef<HTMLVideoElement>(null);
+  const { isActive: isPreloaderActive, isExiting: isPreloaderExiting } =
+    useSitePreloader(backgroundVideoRef);
   const dragMovedRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
   const closeWindowTimeoutRef = useRef<number | null>(null);
@@ -3065,7 +3071,15 @@ export default function Home() {
   }
 
   return (
-    <main className="portfolio-main relative grid h-svh w-screen place-items-center bg-black text-[#fafafa]">
+    <>
+      {isPreloaderActive ? (
+        <SitePreloaderOverlay isExiting={isPreloaderExiting} />
+      ) : null}
+      <main
+        className={`portfolio-main relative grid h-svh w-screen place-items-center bg-black text-[#fafafa] ${
+          isPreloaderActive ? "portfolio-main--preloading" : ""
+        }`}
+      >
       <video
         ref={backgroundVideoRef}
         aria-hidden="true"
@@ -3242,5 +3256,6 @@ export default function Home() {
         </div>
       </section>
     </main>
+    </>
   );
 }
