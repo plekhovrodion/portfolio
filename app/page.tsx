@@ -2825,6 +2825,7 @@ export default function Home() {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [currentTime, setCurrentTime] = useState("--:--");
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [musicVideoSrc, setMusicVideoSrc] = useState<string | null>(null);
 
   useEffect(() => {
     stageSizeRef.current = stageSize;
@@ -2937,6 +2938,41 @@ export default function Home() {
       // Mobile browsers can still block autoplay in low-power modes.
     });
   }, []);
+
+  useEffect(() => {
+    if (!isMusicPlaying || !musicVideoSrc) {
+      return;
+    }
+
+    const video = musicVideoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    function startPlayback() {
+      video.muted = false;
+      void video.play().catch(() => {
+        video.muted = true;
+        setIsMusicPlaying(false);
+      });
+    }
+
+    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+      startPlayback();
+      return;
+    }
+
+    video.addEventListener("canplay", startPlayback, { once: true });
+
+    if (video.readyState === HTMLMediaElement.HAVE_NOTHING) {
+      video.load();
+    }
+
+    return () => {
+      video.removeEventListener("canplay", startPlayback);
+    };
+  }, [isMusicPlaying, musicVideoSrc]);
 
   function getStagePoint(clientX: number, clientY: number) {
     const stage = stageRef.current;
@@ -3146,15 +3182,11 @@ export default function Home() {
       return;
     }
 
-    setIsMusicPlaying(true);
-
-    if (musicVideo) {
-      musicVideo.muted = false;
-      void musicVideo.play().catch(() => {
-        musicVideo.muted = true;
-        setIsMusicPlaying(false);
-      });
+    if (!musicVideoSrc) {
+      setMusicVideoSrc(MUSIC_BACKGROUND_VIDEO);
     }
+
+    setIsMusicPlaying(true);
   }
 
   const isMobileLayout = stageSize.width <= MOBILE_LAYOUT_BREAKPOINT;
@@ -3205,13 +3237,14 @@ export default function Home() {
         className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
           isMusicPlaying ? "opacity-100" : "opacity-0"
         }`}
-        autoPlay
         loop
-        muted={!isMusicPlaying}
+        muted
         playsInline
-        preload="auto"
+        preload="none"
       >
-        <source src={MUSIC_BACKGROUND_VIDEO} type="video/webm" />
+        {musicVideoSrc ? (
+          <source src={musicVideoSrc} type="video/webm" />
+        ) : null}
       </video>
       <div className="absolute inset-0 bg-black/35" />
 
