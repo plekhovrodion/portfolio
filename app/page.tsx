@@ -3231,21 +3231,21 @@ export default function Home() {
           type="video/webm"
         />
       </video>
-      <video
-        ref={musicVideoRef}
-        aria-hidden="true"
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-          isMusicPlaying ? "opacity-100" : "opacity-0"
-        }`}
-        loop
-        muted
-        playsInline
-        preload="none"
-      >
-        {musicVideoSrc ? (
+      {musicVideoSrc ? (
+        <video
+          ref={musicVideoRef}
+          aria-hidden="true"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+            isMusicPlaying ? "opacity-100" : "opacity-0"
+          }`}
+          loop
+          muted
+          playsInline
+          preload="none"
+        >
           <source src={musicVideoSrc} type="video/webm" />
-        ) : null}
-      </video>
+        </video>
+      ) : null}
       <div className="absolute inset-0 bg-black/35" />
 
       <section

@@ -1,0 +1,20 @@
+# Для хостингов с поддержкой заголовков (Cloudflare Pages, Netlify).
+# GitHub Pages их не применяет — настройте Cache Rule в Cloudflare для plekhov.online.
+
+/wall.webm
+  Cache-Control: public, max-age=31536000, immutable
+
+/dancing-rat-chess-type-beat.webm
+  Cache-Control: public, max-age=31536000, immutable
+
+/motion/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/desktop-previews/*
+  Cache-Control: public, max-age=604800
+
+/cases/*
+  Cache-Control: public, max-age=604800
+
+/profile.png
+  Cache-Control: public, max-age=604800
