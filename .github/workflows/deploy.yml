@@ -34,6 +34,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://plekhov.online
+          NEXT_PUBLIC_RATING_API_URL: ${{ secrets.RATING_API_URL }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

@@ -13,7 +13,18 @@ import type {
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
-import { useCallback, useEffect, useRef, useState, type ReactPortal } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactPortal,
+} from "react";
+import {
+  PortfolioRatingWindow,
+  usePortfolioRating,
+} from "@/components/portfolio-rating";
 import {
   SitePreloaderOverlay,
   useSitePreloader,
@@ -239,6 +250,19 @@ function getMobileCardPosition(stageSize: StageSize) {
   };
 }
 
+function getMobileStageContentHeight(
+  files: readonly DesktopFile[],
+  cardPosition: Position,
+) {
+  const cardBottom = cardPosition.y + CARD_HEIGHT;
+  const filesBottom = files.reduce(
+    (maxBottom, file) => Math.max(maxBottom, file.y + FILE_HEIGHT),
+    0,
+  );
+
+  return Math.ceil(Math.max(cardBottom + 32, filesBottom + 48));
+}
+
 const DESKTOP_STAGE_PADDING = 40;
 
 const desktopFileOrbitOffsets: Record<string, Position> = {
@@ -372,18 +396,20 @@ function getDesktopFileOrbitPositions(
 }
 
 function DesktopFilePreview({ src }: { src: string }) {
-  const { isReady, markReady } = useMediaReady(src);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(src);
 
   return (
     <>
       {!isReady ? <MediaSkeleton className="absolute inset-0" /> : null}
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        ref={bindMediaRef}
         src={src}
         alt=""
-        fill
-        sizes="96px"
-        unoptimized
-        className={`object-cover ${isReady ? "media-loaded" : "media-loading"}`}
+        width={96}
+        height={72}
+        decoding="async"
+        className={`desktop-file-icon__asset desktop-file-icon__asset--cover ${isReady ? "media-loaded" : "media-loading"}`}
         onLoad={markReady}
       />
     </>
@@ -409,7 +435,7 @@ function DesktopFileIcon({
   return (
     <button
       type="button"
-      className={`desktop-file group absolute flex w-32 touch-none select-none appearance-none flex-col items-center gap-2 border-0 bg-transparent p-0 focus-visible:outline-none ${
+      className={`desktop-file absolute flex w-32 touch-none select-none appearance-none flex-col items-center gap-2 border-0 bg-transparent p-0 focus-visible:outline-none ${
         isDragging ? "z-20 cursor-grabbing" : "cursor-grab"
       }`}
       style={
@@ -423,20 +449,21 @@ function DesktopFileIcon({
         onDragStart(event, { type: "file", id: file.id }, file)
       }
     >
-      <div className="desktop-file-icon rounded-[24px] border border-white/0 p-4 transition duration-200 group-hover:border-white/35 group-hover:bg-black/15 group-focus-visible:border-white/35 group-focus-visible:bg-black/15 group-focus-visible:outline-none">
+      <div className="desktop-file-icon">
         {file.variant === "folder" ? (
-          <div className="relative h-[72px] w-24 transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
-            <Image
+          <div className="desktop-file-icon__visual desktop-file-icon__visual--folder">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={withBasePath("/icons/folder.svg")}
               alt=""
-              fill
-              sizes="96px"
-              unoptimized
-              className="object-contain drop-shadow-[0_0_12px_rgba(0,0,0,0.16)]"
+              width={96}
+              height={72}
+              decoding="async"
+              className="desktop-file-icon__asset desktop-file-icon__asset--folder"
             />
           </div>
         ) : (
-          <div className="relative h-[72px] w-24 overflow-hidden rounded-lg bg-[#fafafa] shadow-[0_0_12px_rgba(0,0,0,0.16)] transition duration-200 group-hover:scale-[1.04] group-focus-visible:scale-[1.04]">
+          <div className="desktop-file-icon__visual desktop-file-icon__visual--preview">
             {desktopFilePreviews[file.id] ? (
               <DesktopFilePreview src={desktopFilePreviews[file.id]!} />
             ) : null}
@@ -452,16 +479,57 @@ function DesktopFileIcon({
 
 function useMediaReady(source: string, isActive = true) {
   const [isReady, setIsReady] = useState(false);
+  const mediaRef = useRef<HTMLImageElement | HTMLVideoElement | null>(null);
 
-  useEffect(() => {
+  const syncReadyFromElement = useCallback(() => {
+    const node = mediaRef.current;
+    if (!node || !isActive) {
+      return;
+    }
+
+    if (
+      node instanceof HTMLImageElement &&
+      node.complete &&
+      node.naturalWidth > 0
+    ) {
+      setIsReady(true);
+      return;
+    }
+
+    if (
+      node instanceof HTMLVideoElement &&
+      node.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+    ) {
+      setIsReady(true);
+    }
+  }, [isActive]);
+
+  useLayoutEffect(() => {
     setIsReady(false);
-  }, [source, isActive]);
+    syncReadyFromElement();
+  }, [source, isActive, syncReadyFromElement]);
 
   const markReady = useCallback(() => {
-    setIsReady(true);
-  }, []);
+    if (isActive) {
+      setIsReady(true);
+    }
+  }, [isActive]);
 
-  return { isReady: isActive ? isReady : false, markReady };
+  const bindMediaRef = useCallback(
+    (node: HTMLImageElement | HTMLVideoElement | null) => {
+      mediaRef.current = node;
+      if (node) {
+        syncReadyFromElement();
+      }
+    },
+    [syncReadyFromElement],
+  );
+
+  return {
+    isReady: isActive ? isReady : false,
+    markReady,
+    bindMediaRef,
+  };
 }
 
 function MediaSkeleton({
@@ -489,7 +557,7 @@ function CaseVideo({
   title: string;
   mimeType?: string;
 }) {
-  const { isReady, markReady } = useMediaReady(src);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(src);
 
   return (
     <div className="case-video-frame">
@@ -497,6 +565,7 @@ function CaseVideo({
         <MediaSkeleton className="absolute inset-0 rounded-[inherit]" />
       ) : null}
       <video
+        ref={bindMediaRef}
         className={`case-video-frame__player ${isReady ? "media-loaded" : "media-loading"}`}
         controls
         playsInline
@@ -554,7 +623,15 @@ function CaseMotionVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const loadedSrcRef = useRef<string | null>(null);
   const shouldLoad = mode === "lightbox" ? isPlaying : isVisible;
-  const { isReady, markReady } = useMediaReady(src, shouldLoad);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(src, shouldLoad);
+
+  const setVideoRef = useCallback(
+    (node: HTMLVideoElement | null) => {
+      videoRef.current = node;
+      bindMediaRef(node);
+    },
+    [bindMediaRef],
+  );
 
   useEffect(() => {
     const video = videoRef.current;
@@ -648,7 +725,7 @@ function CaseMotionVideo({
         <MediaSkeleton className="absolute inset-0 z-[1] rounded-[inherit]" />
       ) : null}
       <video
-        ref={videoRef}
+        ref={setVideoRef}
         className={`${className ?? ""} ${isReady ? "media-loaded" : "media-loading"}`}
         loop
         muted
@@ -1478,7 +1555,7 @@ function CaseImageLightbox({
   isClosing: boolean;
   onClose: () => void;
 }) {
-  const { isReady, markReady } = useMediaReady(image.src);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(image.src);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -1521,6 +1598,7 @@ function CaseImageLightbox({
         ) : null}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          ref={bindMediaRef}
           src={image.src}
           alt={image.alt}
           width={image.width}
@@ -1562,7 +1640,7 @@ function CaseGridImage({
   onOpen: (image: CaseImage) => void;
   appearDelay?: number;
 }) {
-  const { isReady, markReady } = useMediaReady(image.src);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(image.src);
 
   return (
     <button
@@ -1580,6 +1658,7 @@ function CaseGridImage({
       ) : null}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={bindMediaRef}
         src={image.src}
         alt={image.alt}
         width={image.width}
@@ -1692,7 +1771,9 @@ function ProfileAvatar({
   priority?: boolean;
 }) {
   const { openLightbox, lightboxPortal } = useCaseImageLightbox();
-  const { isReady, markReady } = useMediaReady(profileAvatarImage.src);
+  const { isReady, markReady, bindMediaRef } = useMediaReady(
+    profileAvatarImage.src,
+  );
   const sizeClass =
     size === "sm" ? "size-14 min-[901px]:size-16" : "size-20";
   const imageSizes = size === "sm" ? "(max-width: 900px) 56px, 64px" : "80px";
@@ -1710,6 +1791,7 @@ function ProfileAvatar({
           <MediaSkeleton className="absolute inset-0 rounded-full" />
         ) : null}
         <Image
+          ref={bindMediaRef}
           src={profileAvatarImage.src}
           alt={profileAvatarImage.alt}
           fill
@@ -2715,6 +2797,11 @@ export default function Home() {
   const musicVideoRef = useRef<HTMLVideoElement>(null);
   const { isActive: isPreloaderActive, isExiting: isPreloaderExiting } =
     useSitePreloader(backgroundVideoRef);
+  const {
+    isWindowOpen: isPortfolioRatingWindowOpen,
+    saveRating: savePortfolioRating,
+    closeRatingWindow: closePortfolioRatingWindow,
+  } = usePortfolioRating(!isPreloaderActive);
   const dragMovedRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
   const closeWindowTimeoutRef = useRef<number | null>(null);
@@ -3070,15 +3157,25 @@ export default function Home() {
     }
   }
 
+  const isMobileLayout = stageSize.width <= MOBILE_LAYOUT_BREAKPOINT;
+  const mobileStageMinHeight = isMobileLayout
+    ? Math.max(
+        stageSize.height,
+        getMobileStageContentHeight(files, cardPosition),
+      )
+    : undefined;
+
   return (
     <>
       {isPreloaderActive ? (
         <SitePreloaderOverlay isExiting={isPreloaderExiting} />
       ) : null}
       <main
-        className={`portfolio-main relative grid h-svh w-screen place-items-center bg-black text-[#fafafa] ${
-          isPreloaderActive ? "portfolio-main--preloading" : ""
-        }`}
+        className={`portfolio-main relative grid w-screen bg-black text-[#fafafa] ${
+          isMobileLayout
+            ? "min-h-svh h-auto place-items-stretch"
+            : "h-svh place-items-center"
+        } ${isPreloaderActive ? "portfolio-main--preloading" : ""}`}
       >
       <video
         ref={backgroundVideoRef}
@@ -3121,7 +3218,16 @@ export default function Home() {
       <section
         ref={stageRef}
         aria-label="Портфолио Родиона Плехова"
-        className="figma-stage relative h-full w-full shrink-0 overflow-hidden"
+        className={`figma-stage relative w-full shrink-0 ${
+          isMobileLayout
+            ? "min-h-full overflow-visible"
+            : "h-full overflow-hidden"
+        }`}
+        style={
+          mobileStageMinHeight
+            ? { minHeight: mobileStageMinHeight }
+            : undefined
+        }
         onPointerMove={handleStagePointerMove}
         onPointerUp={stopDrag}
         onPointerCancel={stopDrag}
@@ -3254,6 +3360,12 @@ export default function Home() {
             />
           ))}
         </div>
+
+        <PortfolioRatingWindow
+          isOpen={isPortfolioRatingWindowOpen}
+          onClose={closePortfolioRatingWindow}
+          onRate={savePortfolioRating}
+        />
       </section>
     </main>
     </>
