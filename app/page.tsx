@@ -96,7 +96,7 @@ const caseWindowTitles: Record<string, string> = {
   classes: "Статистика занятий",
   "ai-assistant": "ИИ-помощник в Лаборатории заданий",
   subscription: "Тарифы в Лаборатории заданий",
-  "vk-cart": "Корзина ВК Маркет",
+  "vk-cart": "Корзина ВК Маркет — тестовое задание",
 };
 
 type AboutMeHighlight = {
@@ -2431,6 +2431,7 @@ function VkCartCase() {
           >
             Корзина ВК Маркет
           </a>
+          <span className="text-white/72"> — тестовое задание</span>
         </h1>
       </section>
 
