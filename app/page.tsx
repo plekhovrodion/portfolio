@@ -3303,6 +3303,15 @@ export default function Home() {
         </header>
 
         {activeCaseId ? (
+          <div
+            className="absolute inset-x-0 bottom-0 z-20"
+            style={{ top: HEADER_HEIGHT }}
+            aria-hidden="true"
+            onClick={hideCaseWindow}
+          />
+        ) : null}
+
+        {activeCaseId ? (
           <CaseWindow
             caseId={activeCaseId}
             title={getCaseWindowTitle(activeCaseId)}
