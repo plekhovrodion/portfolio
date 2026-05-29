@@ -2950,27 +2950,29 @@ export default function Home() {
       return;
     }
 
+    const musicVideo = video;
+
     function startPlayback() {
-      video.muted = false;
-      void video.play().catch(() => {
-        video.muted = true;
+      musicVideo.muted = false;
+      void musicVideo.play().catch(() => {
+        musicVideo.muted = true;
         setIsMusicPlaying(false);
       });
     }
 
-    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
+    if (musicVideo.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
       startPlayback();
       return;
     }
 
-    video.addEventListener("canplay", startPlayback, { once: true });
+    musicVideo.addEventListener("canplay", startPlayback, { once: true });
 
-    if (video.readyState === HTMLMediaElement.HAVE_NOTHING) {
-      video.load();
+    if (musicVideo.readyState === HTMLMediaElement.HAVE_NOTHING) {
+      musicVideo.load();
     }
 
     return () => {
-      video.removeEventListener("canplay", startPlayback);
+      musicVideo.removeEventListener("canplay", startPlayback);
     };
   }, [isMusicPlaying, musicVideoSrc]);
 
