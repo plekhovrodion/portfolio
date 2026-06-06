@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ChevronDown,
   Maximize2,
   Music,
   Pause,
@@ -84,6 +85,7 @@ const CASE_WINDOW_WIDTH = 832;
 const CASE_WINDOW_HEIGHT = 780;
 const CASE_WINDOW_ANIMATION_MS = 220;
 const CASE_LIGHTBOX_ANIMATION_MS = 220;
+const LIGHTBOX_SWIPE_THRESHOLD = 48;
 const MOBILE_LAYOUT_BREAKPOINT = 900;
 const NARROW_MOBILE_BREAKPOINT = 520;
 const MOBILE_FILE_COLUMNS = 3;
@@ -94,6 +96,118 @@ const vkCartFigmaPrototype =
 
 const inlineLinkClassName =
   "rounded-sm underline decoration-white/35 underline-offset-2 transition hover:text-white/80 hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
+
+const labProductLogoSrc = withBasePath(
+  "/logos/products/laboratoriya-zadaniy.svg",
+);
+const assistantProductLogoSrc = withBasePath(
+  "/logos/products/assistient-prepodavatelya.svg",
+);
+const sberEducationLogoSrc = withBasePath(
+  "/logos/companies/sber-obrazovanie.svg",
+);
+const vkLogoSrc = withBasePath("/logos/companies/vk.svg");
+
+const caseMetaLinkClassName =
+  "inline-flex items-center gap-1 rounded-sm underline decoration-white/35 underline-offset-2 transition hover:text-white/80 hover:decoration-white/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
+
+const caseMetaLogoClassName = "size-5 shrink-0 object-contain";
+
+type CaseMetaBrand = {
+  name: string;
+  href?: string;
+  logoSrc?: string;
+  logoAlt?: string;
+};
+
+function CaseMetaBrandValue({ brand }: { brand: CaseMetaBrand }) {
+  const content = (
+    <>
+      {brand.logoSrc ? (
+        <img
+          src={brand.logoSrc}
+          alt=""
+          aria-hidden="true"
+          className={caseMetaLogoClassName}
+        />
+      ) : null}
+      <span>{brand.name}</span>
+    </>
+  );
+
+  if (brand.href) {
+    return (
+      <a
+        href={brand.href}
+        target="_blank"
+        rel="noreferrer"
+        className={caseMetaLinkClassName}
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        {content}
+      </a>
+    );
+  }
+
+  return <span className="inline-flex max-w-full items-center gap-1">{content}</span>;
+}
+
+function CaseMeta({
+  product,
+  role = "Продуктовый дизайнер",
+  year,
+}: {
+  product: CaseMetaBrand;
+  role?: string;
+  year: string;
+}) {
+  return (
+    <dl className="case-meta case-body">
+      <div className="case-meta__row">
+        <dt className="case-meta__label">Продукт</dt>
+        <dd className="case-meta__value">
+          <CaseMetaBrandValue brand={product} />
+        </dd>
+      </div>
+
+      <div className="case-meta__row">
+        <dt className="case-meta__label">Роль</dt>
+        <dd className="case-meta__value">{role}</dd>
+      </div>
+
+      <div className="case-meta__row">
+        <dt className="case-meta__label">Год</dt>
+        <dd className="case-meta__value">{year}</dd>
+      </div>
+    </dl>
+  );
+}
+
+const labProductBrand: CaseMetaBrand = {
+  name: "Лаборатория заданий",
+  href: "https://edu-assist.ru/",
+  logoSrc: labProductLogoSrc,
+  logoAlt: "Лаборатория заданий",
+};
+
+const assistantProductBrand: CaseMetaBrand = {
+  name: "Ассистент преподавателя",
+  href: "https://edu-assist.me/promo",
+  logoSrc: assistantProductLogoSrc,
+  logoAlt: "Ассистент преподавателя",
+};
+
+const vkMarketProductBrand: CaseMetaBrand = {
+  name: "VK Маркет",
+  href: "https://vk.com/market",
+  logoSrc: vkLogoSrc,
+  logoAlt: "VK Маркет",
+};
+
+const profileProductBrand: CaseMetaBrand = {
+  name: "Единый профиль",
+  href: "https://app.edu-assist.me/profile",
+};
 
 const desktopFilePreviews: Partial<Record<string, string>> = {
   home: withBasePath("/desktop-previews/home.png"),
@@ -107,11 +221,13 @@ const desktopFilePreviews: Partial<Record<string, string>> = {
 const caseWindowTitles: Record<string, string> = {
   "about-me": "Обо мне",
   motion: "Моушн",
-  home: "Главная страница Лаборатории заданий",
+  home: "Главная страница",
+  profile: "Единый профиль",
   classes: "Статистика занятий",
-  "ai-assistant": "ИИ-помощник в Лаборатории заданий",
-  subscription: "Тарифы в Лаборатории заданий",
-  "vk-cart": "Корзина ВК Маркет — тестовое задание",
+  "ai-assistant": "ИИ-помощник",
+  subscription: "Тарифы",
+  "vk-cart": "Корзина — тестовое задание",
+  "assistant-promo": "Промо",
 };
 
 type AboutMeHighlight = {
@@ -787,34 +903,164 @@ function getMotionVideoLayout(index: number): "wide" | "square" {
   return index % 3 === 0 ? "wide" : "square";
 }
 
-function CaseVideoLightbox({
-  video,
-  isClosing,
+function useLightboxGalleryNavigation({
+  itemCount,
+  currentIndex,
+  onIndexChange,
   onClose,
+  isEnabled,
 }: {
-  video: MotionVideo;
-  isClosing: boolean;
+  itemCount: number;
+  currentIndex: number;
+  onIndexChange: (index: number) => void;
   onClose: () => void;
+  isEnabled: boolean;
 }) {
+  const canNavigate = itemCount > 1;
+  const swipeStartRef = useRef<CursorPosition | null>(null);
+
+  const goToPrevious = useCallback(() => {
+    if (!canNavigate || currentIndex <= 0) {
+      return;
+    }
+
+    onIndexChange(currentIndex - 1);
+  }, [canNavigate, currentIndex, onIndexChange]);
+
+  const goToNext = useCallback(() => {
+    if (!canNavigate || currentIndex >= itemCount - 1) {
+      return;
+    }
+
+    onIndexChange(currentIndex + 1);
+  }, [canNavigate, currentIndex, itemCount, onIndexChange]);
+
   useEffect(() => {
+    if (!isEnabled) {
+      return;
+    }
+
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
         onClose();
+        return;
+      }
+
+      if (!canNavigate) {
+        return;
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        event.stopPropagation();
+        goToPrevious();
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        event.stopPropagation();
+        goToNext();
       }
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleKeyDown, true);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [onClose]);
+  }, [canNavigate, goToNext, goToPrevious, isEnabled, onClose]);
+
+  const bindSwipeHandlers = useCallback(() => {
+    return {
+      onPointerDown: (event: ReactPointerEvent<HTMLElement>) => {
+        if (!canNavigate || !isEnabled) {
+          return;
+        }
+
+        swipeStartRef.current = {
+          x: event.clientX,
+          y: event.clientY,
+        };
+      },
+      onPointerUp: (event: ReactPointerEvent<HTMLElement>) => {
+        const start = swipeStartRef.current;
+        swipeStartRef.current = null;
+
+        if (!start || !canNavigate || !isEnabled) {
+          return;
+        }
+
+        const deltaX = event.clientX - start.x;
+        const deltaY = event.clientY - start.y;
+
+        if (Math.abs(deltaX) < LIGHTBOX_SWIPE_THRESHOLD) {
+          return;
+        }
+
+        if (Math.abs(deltaX) < Math.abs(deltaY)) {
+          return;
+        }
+
+        if (deltaX < 0) {
+          goToNext();
+          return;
+        }
+
+        goToPrevious();
+      },
+      onPointerCancel: () => {
+        swipeStartRef.current = null;
+      },
+    };
+  }, [canNavigate, goToNext, goToPrevious, isEnabled]);
+
+  return {
+    canNavigate,
+    goToPrevious,
+    goToNext,
+    bindSwipeHandlers,
+  };
+}
+
+function CaseVideoLightbox({
+  videos,
+  index,
+  isClosing,
+  onClose,
+  onIndexChange,
+}: {
+  videos: ReadonlyArray<MotionVideo>;
+  index: number;
+  isClosing: boolean;
+  onClose: () => void;
+  onIndexChange: (index: number) => void;
+}) {
+  const video = videos[index];
+  const shouldPlayOpenAnimationRef = useRef(true);
+  const { bindSwipeHandlers } = useLightboxGalleryNavigation({
+    itemCount: videos.length,
+    currentIndex: index,
+    onIndexChange,
+    onClose,
+    isEnabled: !isClosing,
+  });
+
+  useEffect(() => {
+    shouldPlayOpenAnimationRef.current = false;
+  }, [index]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   return (
     <div
@@ -825,14 +1071,20 @@ function CaseVideoLightbox({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={video.title}
+      aria-label={
+        videos.length > 1
+          ? `${video.title} (${index + 1} из ${videos.length})`
+          : video.title
+      }
       onClick={onClose}
     >
       <div
         className="case-image-lightbox__frame"
         onClick={(event) => event.stopPropagation()}
+        {...bindSwipeHandlers()}
       >
         <CaseMotionVideo
+          key={video.src}
           src={video.src}
           mimeType={video.mimeType}
           mode="lightbox"
@@ -840,7 +1092,9 @@ function CaseVideoLightbox({
           className={`case-image-lightbox__image case-image-lightbox__video ${
             isClosing
               ? "case-image-lightbox__image--closing"
-              : "case-image-lightbox__image--opening"
+              : shouldPlayOpenAnimationRef.current
+                ? "case-image-lightbox__image--opening"
+                : ""
           }`}
         />
       </div>
@@ -903,7 +1157,7 @@ function MotionVideoTile({
     <button
       ref={tileRef}
       type="button"
-      className={`case-zoomable-video bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${
+      className={`case-zoomable-video bg-white/10 ${
         layout === "wide" ? "case-motion-item--wide" : "case-motion-item--square"
       }`}
       onMouseEnter={autoPlayWhenVisible ? undefined : () => setIsHoverPlaying(true)}
@@ -931,7 +1185,7 @@ function CaseMotionGrid({
 }: {
   videos: ReadonlyArray<MotionVideo>;
 }) {
-  const [lightboxVideo, setLightboxVideo] = useState<MotionVideo | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isLightboxClosing, setIsLightboxClosing] = useState(false);
   const lightboxCloseTimeoutRef = useRef<number | null>(null);
 
@@ -948,26 +1202,45 @@ function CaseMotionGrid({
   }, []);
 
   function openLightbox(video: MotionVideo) {
+    const index = videos.findIndex((item) => item.src === video.src);
+    if (index === -1) {
+      return;
+    }
+
     if (lightboxCloseTimeoutRef.current) {
       window.clearTimeout(lightboxCloseTimeoutRef.current);
       lightboxCloseTimeoutRef.current = null;
     }
 
     setIsLightboxClosing(false);
-    setLightboxVideo(video);
+    setLightboxIndex(index);
   }
 
   function closeLightbox() {
-    if (!lightboxVideo || isLightboxClosing) {
+    if (lightboxIndex === null || isLightboxClosing) {
       return;
     }
 
     setIsLightboxClosing(true);
     lightboxCloseTimeoutRef.current = window.setTimeout(() => {
-      setLightboxVideo(null);
+      setLightboxIndex(null);
       setIsLightboxClosing(false);
       lightboxCloseTimeoutRef.current = null;
     }, CASE_LIGHTBOX_ANIMATION_MS);
+  }
+
+  function changeLightboxIndex(index: number) {
+    if (index < 0 || index >= videos.length) {
+      return;
+    }
+
+    if (lightboxCloseTimeoutRef.current) {
+      window.clearTimeout(lightboxCloseTimeoutRef.current);
+      lightboxCloseTimeoutRef.current = null;
+    }
+
+    setIsLightboxClosing(false);
+    setLightboxIndex(index);
   }
 
   return (
@@ -983,12 +1256,14 @@ function CaseMotionGrid({
           />
         ))}
       </div>
-      {lightboxVideo
+      {lightboxIndex !== null
         ? createPortal(
             <CaseVideoLightbox
-              video={lightboxVideo}
+              videos={videos}
+              index={lightboxIndex}
               isClosing={isLightboxClosing}
               onClose={closeLightbox}
+              onIndexChange={changeLightboxIndex}
             />,
             document.body,
           )
@@ -999,7 +1274,7 @@ function CaseMotionGrid({
 
 function MotionCase() {
   return (
-    <div className="case-content flex min-h-0 w-full flex-1 flex-col overflow-y-auto pr-2 text-[#fafafa]">
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseMotionGrid videos={motionPlaylist} />
     </div>
   );
@@ -1038,6 +1313,7 @@ type CaseImage = {
   width: number;
   height: number;
   layout?: "solo";
+  caption?: string;
 };
 
 const profileAvatarImage: CaseImage = {
@@ -1046,6 +1322,8 @@ const profileAvatarImage: CaseImage = {
   width: 640,
   height: 640,
 };
+
+const profileAvatarGallery: ReadonlyArray<CaseImage> = [profileAvatarImage];
 
 type CaseImageGroup =
   | { type: "landscape"; images: CaseImage[] }
@@ -1200,7 +1478,8 @@ const profileGalleryImages: CaseImage[] = [
 const mainPageCoverImage = [
   {
     src: withBasePath("/cases/main/video.png"),
-    alt: "Главная страница Лаборатории заданий — hero-блок",
+    alt: "Пустая главная без заданий с саджестами",
+    caption: "Пустая главная без заданий и с саджестами",
     width: 2048,
     height: 1200,
     layout: "solo",
@@ -1210,19 +1489,22 @@ const mainPageCoverImage = [
 const mainPageMobileScreens = [
   {
     src: withBasePath("/cases/main/screen-1.png"),
-    alt: "Главная страница — мобильная версия, экран 1",
+    alt: "Главная страница — мобильная версия",
+    caption: "Мобильная версия главной",
     width: 640,
     height: 1400,
   },
   {
     src: withBasePath("/cases/main/screen-2.png"),
-    alt: "Главная страница — мобильная версия, экран 2",
+    alt: "Онбординг-тултип на главной",
+    caption: "Онбординг-тултип",
     width: 640,
     height: 1400,
   },
   {
     src: withBasePath("/cases/main/screen-3.png"),
-    alt: "Главная страница — мобильная версия, экран 3",
+    alt: "Настройка вопросов",
+    caption: "Настройка вопросов",
     width: 640,
     height: 1400,
   },
@@ -1230,28 +1512,91 @@ const mainPageMobileScreens = [
 
 const mainPageDesktopScreens = [
   {
-    src: withBasePath("/cases/main/video-1.png"),
-    alt: "Блок «Удобно учить, по‑своему учиться»",
+    src: withBasePath("/cases/main/video-4.png"),
+    alt: "Заполненная главная с папками и заданиями",
+    caption: "Заполненная главная с папками и заданиями",
     width: 2048,
     height: 1200,
   },
   {
-    src: withBasePath("/cases/main/video-4.png"),
-    alt: "Блок «Здесь технологии помогают и поддерживают»",
+    src: withBasePath("/cases/main/video-1.png"),
+    alt: "Заполненная главная с папками и заданиями",
+    caption: "Заполненная главная с папками и заданиями",
     width: 2048,
     height: 1200,
   },
   {
     src: withBasePath("/cases/main/video-2.png"),
-    alt: "Блок «Классные возможности для всех» — педагогу",
+    alt: "Создание новой папки",
+    caption: "Создание новой папки",
     width: 2048,
     height: 1200,
   },
   {
     src: withBasePath("/cases/main/video-3.png"),
-    alt: "Блок «Классные возможности для всех» — ученику",
+    alt: "Модальное окно удаления задания",
+    caption: "Модальное окно удаления задания",
     width: 2048,
     height: 1200,
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const mainPageUiLandscapeScreens = [
+  {
+    src: withBasePath("/cases/main/ui/task-cards.png"),
+    alt: "Карточки заданий — состояния и правила",
+    caption: "Состояния карточек заданий и правила отображения",
+    width: 4968,
+    height: 2402,
+    layout: "solo",
+  },
+  {
+    src: withBasePath("/cases/main/ui/folders.png"),
+    alt: "Папки — состояния и цветовые темы",
+    caption: "Папки: состояния, цветовые темы и счётчики",
+    width: 3416,
+    height: 1530,
+    layout: "solo",
+  },
+  {
+    src: withBasePath("/cases/main/ui/move-task-menu.png"),
+    alt: "Пункт «Переместить» в меню задания",
+    caption: "Пункт «Переместить» в контекстном меню задания",
+    width: 3456,
+    height: 2048,
+    layout: "solo",
+  },
+  {
+    src: withBasePath("/cases/main/ui/move-modal.png"),
+    alt: "Модальное окно перемещения задания в папку",
+    caption: "Модальное окно выбора папки для перемещения задания",
+    width: 6140,
+    height: 1884,
+    layout: "solo",
+  },
+] as const satisfies ReadonlyArray<CaseImage>;
+
+const mainPageUiMobileScreens = [
+  {
+    src: withBasePath("/cases/main/ui/task-constructor.png"),
+    alt: "Конструктор заданий — мобильный экран",
+    caption: "Конструктор заданий на мобильном экране",
+    width: 720,
+    height: 1600,
+  },
+  {
+    src: withBasePath("/cases/main/ui/task-menu.png"),
+    alt: "Меню действий с заданием",
+    caption: "Меню действий с заданием: переместить, редактировать, удалить",
+    width: 720,
+    height: 1600,
+  },
+  {
+    src: withBasePath("/cases/main/ui/edit-folder.png"),
+    alt: "Редактирование папки — название и цвет",
+    caption: "Редактирование папки: название и цветовая тема",
+    width: 720,
+    height: 1600,
   },
 ] as const satisfies ReadonlyArray<CaseImage>;
 
@@ -1355,14 +1700,11 @@ const statisticScreens = [
   },
 ] as const satisfies ReadonlyArray<CaseImage>;
 
-const homeIntroImage = [
-  {
-    src: withBasePath("/cases/main/video.png"),
-    alt: "Главная страница Лаборатории заданий — hero-блок",
-    width: 2048,
-    height: 1200,
-  },
-] as const satisfies ReadonlyArray<CaseImage>;
+const homeIntroVideo: MotionVideo = {
+  src: withBasePath("/motion/landing-hero.mp4"),
+  title: "Hero-блок лендинга",
+  mimeType: "video/mp4",
+};
 
 const subscriptionIntroImage = [
   {
@@ -1470,7 +1812,7 @@ function CaseFigmaPrototype({
 
   return (
     <section className="case-section mx-auto flex w-full flex-col gap-4">
-      <h3>{title}</h3>
+      <h2>{title}</h2>
       <div className="case-figma-embed overflow-hidden rounded-2xl border border-white/12 bg-white/6">
         <iframe
           title={title}
@@ -1491,14 +1833,14 @@ function CaseFigmaPrototype({
   );
 }
 
-function useCaseImageLightbox() {
-  const [lightboxImage, setLightboxImage] = useState<CaseImage | null>(null);
+function useCaseImageLightbox(images: ReadonlyArray<CaseImage>) {
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isLightboxClosing, setIsLightboxClosing] = useState(false);
   const lightboxCloseTimeoutRef = useRef<number | null>(null);
-  const lightboxImageRef = useRef<CaseImage | null>(null);
+  const lightboxIndexRef = useRef<number | null>(null);
   const isLightboxClosingRef = useRef(false);
 
-  lightboxImageRef.current = lightboxImage;
+  lightboxIndexRef.current = lightboxIndex;
   isLightboxClosingRef.current = isLightboxClosing;
 
   useEffect(() => {
@@ -1509,73 +1851,107 @@ function useCaseImageLightbox() {
     };
   }, []);
 
-  const openLightbox = useCallback((image: CaseImage) => {
-    if (lightboxCloseTimeoutRef.current) {
-      window.clearTimeout(lightboxCloseTimeoutRef.current);
-      lightboxCloseTimeoutRef.current = null;
-    }
+  const openLightbox = useCallback(
+    (image: CaseImage) => {
+      const index = images.findIndex((item) => item.src === image.src);
+      if (index === -1) {
+        return;
+      }
 
-    setIsLightboxClosing(false);
-    setLightboxImage(image);
-  }, []);
+      if (lightboxCloseTimeoutRef.current) {
+        window.clearTimeout(lightboxCloseTimeoutRef.current);
+        lightboxCloseTimeoutRef.current = null;
+      }
+
+      setIsLightboxClosing(false);
+      setLightboxIndex(index);
+    },
+    [images],
+  );
 
   const closeLightbox = useCallback(() => {
-    if (!lightboxImageRef.current || isLightboxClosingRef.current) {
+    if (lightboxIndexRef.current === null || isLightboxClosingRef.current) {
       return;
     }
 
     setIsLightboxClosing(true);
     lightboxCloseTimeoutRef.current = window.setTimeout(() => {
-      setLightboxImage(null);
+      setLightboxIndex(null);
       setIsLightboxClosing(false);
       lightboxCloseTimeoutRef.current = null;
     }, CASE_LIGHTBOX_ANIMATION_MS);
   }, []);
 
-  const lightboxPortal: ReactPortal | null = lightboxImage
-    ? createPortal(
-        <CaseImageLightbox
-          image={lightboxImage}
-          isClosing={isLightboxClosing}
-          onClose={closeLightbox}
-        />,
-        document.body,
-      )
-    : null;
+  const changeLightboxIndex = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= images.length) {
+        return;
+      }
+
+      if (lightboxCloseTimeoutRef.current) {
+        window.clearTimeout(lightboxCloseTimeoutRef.current);
+        lightboxCloseTimeoutRef.current = null;
+      }
+
+      setIsLightboxClosing(false);
+      setLightboxIndex(index);
+    },
+    [images.length],
+  );
+
+  const lightboxPortal: ReactPortal | null =
+    lightboxIndex !== null
+      ? createPortal(
+          <CaseImageLightbox
+            images={images}
+            index={lightboxIndex}
+            isClosing={isLightboxClosing}
+            onClose={closeLightbox}
+            onIndexChange={changeLightboxIndex}
+          />,
+          document.body,
+        )
+      : null;
 
   return { openLightbox, lightboxPortal };
 }
 
 function CaseImageLightbox({
-  image,
+  images,
+  index,
   isClosing,
   onClose,
+  onIndexChange,
 }: {
-  image: CaseImage;
+  images: ReadonlyArray<CaseImage>;
+  index: number;
   isClosing: boolean;
   onClose: () => void;
+  onIndexChange: (index: number) => void;
 }) {
+  const image = images[index];
   const { isReady, markReady, bindMediaRef } = useMediaReady(image.src);
+  const shouldPlayOpenAnimationRef = useRef(true);
+  const { bindSwipeHandlers } = useLightboxGalleryNavigation({
+    itemCount: images.length,
+    currentIndex: index,
+    onIndexChange,
+    onClose,
+    isEnabled: !isClosing,
+  });
 
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        onClose();
-      }
-    }
+    shouldPlayOpenAnimationRef.current = false;
+  }, [index]);
 
+  useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown, true);
 
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div
@@ -1586,10 +1962,14 @@ function CaseImageLightbox({
       }`}
       role="dialog"
       aria-modal="true"
-      aria-label={image.alt}
+      aria-label={
+        images.length > 1
+          ? `${image.alt} (${index + 1} из ${images.length})`
+          : image.alt
+      }
       onClick={onClose}
     >
-      <div className="case-image-lightbox__frame">
+      <div className="case-image-lightbox__frame" {...bindSwipeHandlers()}>
         {!isReady ? (
           <MediaSkeleton
             className="pointer-events-none absolute left-1/2 top-1/2 max-h-[88dvh] w-[min(92dvw,960px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl"
@@ -1598,6 +1978,7 @@ function CaseImageLightbox({
         ) : null}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          key={image.src}
           ref={bindMediaRef}
           src={image.src}
           alt={image.alt}
@@ -1608,7 +1989,9 @@ function CaseImageLightbox({
           } ${
             isClosing
               ? "case-image-lightbox__image--closing"
-              : "case-image-lightbox__image--opening"
+              : shouldPlayOpenAnimationRef.current
+                ? "case-image-lightbox__image--opening"
+                : ""
           }`}
           onLoad={markReady}
           onError={markReady}
@@ -1631,50 +2014,202 @@ function CaseImageLightbox({
   );
 }
 
+type CursorPosition = {
+  x: number;
+  y: number;
+};
+
+const CASE_CURSOR_TOOLTIP_OFFSET = 18;
+const CASE_CURSOR_TOOLTIP_LERP = 0.18;
+
+function CaseCursorTooltip({
+  text,
+  position,
+}: {
+  text: string;
+  position: CursorPosition;
+}) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const targetRef = useRef(position);
+  const currentRef = useRef(position);
+  const frameRef = useRef<number | null>(null);
+
+  targetRef.current = position;
+
+  useLayoutEffect(() => {
+    currentRef.current = { ...position };
+
+    const tooltip = tooltipRef.current;
+    if (!tooltip) {
+      return;
+    }
+
+    tooltip.style.transform = `translate3d(${position.x + CASE_CURSOR_TOOLTIP_OFFSET}px, ${position.y + CASE_CURSOR_TOOLTIP_OFFSET}px, 0)`;
+  }, []);
+
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const animate = () => {
+      const tooltip = tooltipRef.current;
+      if (tooltip) {
+        const target = targetRef.current;
+        const current = currentRef.current;
+
+        if (prefersReducedMotion) {
+          current.x = target.x;
+          current.y = target.y;
+        } else {
+          current.x += (target.x - current.x) * CASE_CURSOR_TOOLTIP_LERP;
+          current.y += (target.y - current.y) * CASE_CURSOR_TOOLTIP_LERP;
+        }
+
+        tooltip.style.transform = `translate3d(${current.x + CASE_CURSOR_TOOLTIP_OFFSET}px, ${current.y + CASE_CURSOR_TOOLTIP_OFFSET}px, 0)`;
+      }
+
+      frameRef.current = window.requestAnimationFrame(animate);
+    };
+
+    frameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
+    };
+  }, []);
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      ref={tooltipRef}
+      className="case-cursor-tooltip"
+      role="tooltip"
+    >
+      {text}
+    </div>,
+    document.body,
+  );
+}
+
 function CaseGridImage({
   image,
   onOpen,
   appearDelay = 0,
+  cursorTooltip = false,
 }: {
   image: CaseImage;
   onOpen: (image: CaseImage) => void;
   appearDelay?: number;
+  cursorTooltip?: boolean;
 }) {
   const { isReady, markReady, bindMediaRef } = useMediaReady(image.src);
+  const [canUseCursorTooltip, setCanUseCursorTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<CursorPosition | null>(
+    null,
+  );
+  const showCursorTooltip =
+    cursorTooltip && Boolean(image.caption) && canUseCursorTooltip;
+
+  useEffect(() => {
+    const media = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setCanUseCursorTooltip(media.matches);
+
+    update();
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  const handlePointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!showCursorTooltip) {
+        return;
+      }
+
+      setTooltipPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [showCursorTooltip],
+  );
+
+  const handlePointerEnter = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (!showCursorTooltip) {
+        return;
+      }
+
+      setTooltipPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    },
+    [showCursorTooltip],
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    setTooltipPosition(null);
+  }, []);
 
   return (
-    <button
-      type="button"
-      className="case-zoomable-image relative overflow-hidden rounded-2xl bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-      style={{
-        aspectRatio: `${image.width} / ${image.height}`,
-        "--image-appear-delay": `${appearDelay}ms`,
-      } as CSSProperties}
-      onClick={() => onOpen(image)}
-      aria-label={`Открыть на весь экран: ${image.alt}`}
-    >
-      {!isReady ? (
-        <MediaSkeleton className="absolute inset-0 rounded-[inherit]" />
+    <figure className="flex w-full flex-col">
+      <button
+        type="button"
+        className="case-zoomable-image relative overflow-hidden rounded-2xl bg-white/10"
+        style={{
+          aspectRatio: `${image.width} / ${image.height}`,
+          "--image-appear-delay": `${appearDelay}ms`,
+        } as CSSProperties}
+        onClick={() => onOpen(image)}
+        onPointerEnter={handlePointerEnter}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={handlePointerLeave}
+        aria-label={`Открыть на весь экран: ${image.alt}`}
+      >
+        {!isReady ? (
+          <MediaSkeleton className="absolute inset-0 rounded-[inherit]" />
+        ) : null}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          ref={bindMediaRef}
+          src={image.src}
+          alt={image.alt}
+          width={image.width}
+          height={image.height}
+          decoding="async"
+          loading="lazy"
+          className={isReady ? "media-loaded" : "media-loading"}
+          onLoad={markReady}
+          onError={markReady}
+        />
+      </button>
+      {showCursorTooltip && tooltipPosition && image.caption ? (
+        <CaseCursorTooltip text={image.caption} position={tooltipPosition} />
       ) : null}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={bindMediaRef}
-        src={image.src}
-        alt={image.alt}
-        width={image.width}
-        height={image.height}
-        decoding="async"
-        loading="lazy"
-        className={isReady ? "media-loaded" : "media-loading"}
-        onLoad={markReady}
-        onError={markReady}
-      />
-    </button>
+      {image.caption && !cursorTooltip ? (
+        <figcaption className="case-image-caption text-center text-sm font-normal leading-5 tracking-[-0.1px] text-white/72">
+          {image.caption}
+        </figcaption>
+      ) : null}
+    </figure>
   );
 }
 
-function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
-  const { openLightbox, lightboxPortal } = useCaseImageLightbox();
+function CaseImageGrid({
+  images,
+  cursorTooltip = false,
+}: {
+  images: ReadonlyArray<CaseImage>;
+  cursorTooltip?: boolean;
+}) {
+  const { openLightbox, lightboxPortal } = useCaseImageLightbox(images);
   const groups = groupCaseImages(images);
 
   return (
@@ -1694,6 +2229,7 @@ function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
                 key={image.src}
                 image={image}
                 appearDelay={(groupIndex * 3 + imageIndex) * 45}
+                cursorTooltip={cursorTooltip}
                 onOpen={openLightbox}
               />
             ))}
@@ -1705,18 +2241,102 @@ function CaseImageGrid({ images }: { images: ReadonlyArray<CaseImage> }) {
   );
 }
 
+function CaseIntro({ children }: { children: ReactNode }) {
+  return (
+    <section className="case-intro case-section mx-auto flex w-full flex-col gap-4">
+      {children}
+    </section>
+  );
+}
+
 function CaseSection({
   title,
+  heading = "h2",
+  id,
   children,
 }: {
   title: string;
+  heading?: "h2" | "h3";
+  id?: string;
   children: ReactNode;
 }) {
+  const TitleTag = heading;
+
   return (
-    <section className="case-section mx-auto flex w-full flex-col gap-4">
-      <h3>{title}</h3>
+    <section
+      id={id}
+      className="case-section mx-auto flex w-full flex-col gap-4"
+    >
+      <TitleTag>{title}</TitleTag>
       {children}
     </section>
+  );
+}
+
+const caseScrollJumpButtonClassName =
+  "case-scroll-jump inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-base font-semibold leading-6 tracking-[-0.2px] text-[#fafafa] transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70";
+
+function CaseScrollJumpButton({
+  scrollContainerRef,
+  targetId,
+  label,
+}: {
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  targetId: string;
+  label: string;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+
+    const updateVisibility = () => {
+      const target = scrollContainer.querySelector<HTMLElement>(`#${targetId}`);
+      if (!target) {
+        setIsVisible(false);
+        return;
+      }
+
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      setIsVisible(targetRect.top > containerRect.bottom - 96);
+    };
+
+    updateVisibility();
+    scrollContainer.addEventListener("scroll", updateVisibility, {
+      passive: true,
+    });
+    window.addEventListener("resize", updateVisibility);
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", updateVisibility);
+      window.removeEventListener("resize", updateVisibility);
+    };
+  }, [scrollContainerRef, targetId]);
+
+  const scrollToTarget = useCallback(() => {
+    const scrollContainer = scrollContainerRef.current;
+    const target = scrollContainer?.querySelector<HTMLElement>(`#${targetId}`);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [scrollContainerRef, targetId]);
+
+  return (
+    <button
+      type="button"
+      className={`${caseScrollJumpButtonClassName} absolute bottom-4 left-1/2 z-10 ${
+        isVisible ? "case-scroll-jump--visible" : "pointer-events-none"
+      }`}
+      onClick={scrollToTarget}
+      onPointerDown={(event) => event.stopPropagation()}
+      tabIndex={isVisible ? 0 : -1}
+      aria-hidden={!isVisible}
+    >
+      {label}
+      <ChevronDown aria-hidden className="size-4 shrink-0" strokeWidth={2.25} />
+    </button>
   );
 }
 
@@ -1770,7 +2390,7 @@ function ProfileAvatar({
   size?: "sm" | "md";
   priority?: boolean;
 }) {
-  const { openLightbox, lightboxPortal } = useCaseImageLightbox();
+  const { openLightbox, lightboxPortal } = useCaseImageLightbox(profileAvatarGallery);
   const { isReady, markReady, bindMediaRef } = useMediaReady(
     profileAvatarImage.src,
   );
@@ -1809,7 +2429,7 @@ function ProfileAvatar({
 function AboutMeCase() {
   return (
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
+      <CaseIntro>
         <ProfileAvatar size="md" />
         <h1>Родион Плехов</h1>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -1825,16 +2445,14 @@ function AboutMeCase() {
           </a>{" "}
           Более 4 лет разрабатываю B2C и B2B системы, сервисы и приложения
         </p>
-      </section>
+      </CaseIntro>
 
       <AboutMeContacts />
 
       <CaseSection title="Достижения">
         <div className="flex flex-col gap-6">
           <div>
-            <p className="case-description text-base font-semibold leading-6 tracking-[-0.2px] text-white/92">
-              Достижения продуктов:
-            </p>
+            <h3>Достижения продуктов</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
               {aboutMeProductHighlights.map((item) => (
                 <li key={item.title}>
@@ -1860,9 +2478,7 @@ function AboutMeCase() {
           </div>
 
           <div>
-            <p className="case-description text-base font-semibold leading-6 tracking-[-0.2px] text-white/92">
-              Достижения в команде:
-            </p>
+            <h3>Достижения в команде</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
               {aboutMeTeamHighlights.map((item) => (
                 <li key={item.title}>
@@ -1934,19 +2550,12 @@ function UnifiedProfileCase() {
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseImageGrid images={profileIntroImage} />
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>
-          <a
-            href="https://app.edu-assist.me/profile"
-            target="_blank"
-            rel="noreferrer"
-            className={inlineLinkClassName}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            Единый профиль для сервисов СберОбразования
-          </a>
-        </h1>
-        <h2>Контекст</h2>
+      <CaseIntro>
+        <h1>Единый профиль</h1>
+        <CaseMeta product={profileProductBrand} year="2024" />
+      </CaseIntro>
+
+      <CaseSection title="Контекст">
         <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
           У{" "}
           <a
@@ -1970,7 +2579,7 @@ function UnifiedProfileCase() {
           Команда тратила много времени на поддержку четырёх разных систем, а
           пользователи путались и теряли доступ
         </p>
-      </section>
+      </CaseSection>
 
       <CaseSection title="Цель проекта">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -2081,13 +2690,13 @@ function UnifiedProfileCase() {
           <li>6 родителей</li>
           <li>6 школьников</li>
         </ul>
-        <h4>Что выявили:</h4>
+        <h3>Что выявили:</h3>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>путаница в шагах регистрации</li>
           <li>непонимание, зачем нужен пароль после OTP</li>
           <li>сложности с подтверждением email</li>
         </ul>
-        <h4>Что улучшили:</h4>
+        <h3>Что улучшили:</h3>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>последовательность шагов</li>
           <li>тексты и подсказки</li>
@@ -2100,23 +2709,22 @@ function UnifiedProfileCase() {
 }
 
 function HomePageCase() {
-  return (
-    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
-      <CaseImageGrid images={homeIntroImage} />
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>
-          <a
-            href="https://edu-assist.ru/"
-            target="_blank"
-            rel="noreferrer"
-            className={inlineLinkClassName}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            Главная страница Лаборатории заданий
-          </a>
-        </h1>
-        <h2>Контекст</h2>
+  return (
+    <div className="relative flex min-h-0 w-full flex-1 flex-col">
+      <div
+        ref={scrollContainerRef}
+        className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]"
+      >
+      <CaseMotionGrid videos={[homeIntroVideo]} />
+
+      <CaseIntro>
+        <h1>Главная страница</h1>
+        <CaseMeta product={labProductBrand} year="Декабрь 2025" />
+      </CaseIntro>
+
+      <CaseSection title="Контекст">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Платформа позволяет репетиторам:
         </p>
@@ -2126,28 +2734,16 @@ function HomePageCase() {
           <li>проверять работы</li>
           <li>отслеживать прогресс каждого ученика</li>
         </ul>
+      </CaseSection>
+
+      <CaseSection title="Проблема">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Главная страница была перегружена, не помогала быстро переходить к
           созданию контента и не стимулировала использование ИИ‑функциональности
         </p>
-      </section>
-
-      <CaseSection title="Результаты">
-        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Сравнивались два периода: 12.12–20.12 (до релиза) vs 12.01–20.01
-          (после релиза)
-        </p>
-        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>доля использований ИИ: +72%</li>
-          <li>созданных заданий на преподавателя: +45%</li>
-          <li>конверсия учителей в ИИ‑чаты: +175%</li>
-          <li>конверсия в ИИ‑генерацию заданий: +51%</li>
-        </ul>
       </CaseSection>
 
-      <CaseImageGrid images={mainPageCoverImage} />
-
-      <CaseSection title="Задачи продукта">
+      <CaseSection title="Задачи">
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>сократить количество кликов до целевого действия</li>
           <li>
@@ -2173,10 +2769,8 @@ function HomePageCase() {
         </ul>
       </CaseSection>
 
-      <CaseImageGrid images={mainPageMobileScreens} />
-
       <CaseSection title="Исследование">
-        <h4>Что обнаружили:</h4>
+        <h3>Что обнаружили:</h3>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>
             пользователи тратят слишком много времени, чтобы добраться до
@@ -2189,7 +2783,7 @@ function HomePageCase() {
             ученикам
           </li>
         </ul>
-        <h4>Гипотезы:</h4>
+        <h3>Гипотезы:</h3>
         <ol className="list-decimal space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>
             Если вынести ИИ‑создание контента на первый экран — вырастет
@@ -2206,7 +2800,29 @@ function HomePageCase() {
         </ol>
       </CaseSection>
 
-      <CaseImageGrid images={mainPageDesktopScreens} />
+      <CaseSection title="Экраны" id="home-case-screens">
+        <CaseImageGrid images={mainPageCoverImage} cursorTooltip />
+        <CaseImageGrid images={mainPageMobileScreens} cursorTooltip />
+        <CaseImageGrid images={mainPageDesktopScreens} cursorTooltip />
+        <CaseImageGrid images={mainPageUiLandscapeScreens} cursorTooltip />
+        <CaseImageGrid images={mainPageUiMobileScreens} cursorTooltip />
+      </CaseSection>
+
+      <CaseSection title="Результаты" id="home-case-results">
+        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
+          <li>доля использований ИИ: +72%</li>
+          <li>созданных заданий на преподавателя: +45%</li>
+          <li>конверсия учителей в ИИ‑чаты: +175%</li>
+          <li>конверсия в ИИ‑генерацию заданий: +51%</li>
+        </ul>
+      </CaseSection>
+      </div>
+
+      <CaseScrollJumpButton
+        scrollContainerRef={scrollContainerRef}
+        targetId="home-case-results"
+        label="Результаты"
+      />
     </div>
   );
 }
@@ -2216,19 +2832,10 @@ function AiAssistantCase() {
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseImageGrid images={aiIntroImage} />
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>
-          <a
-            href="https://app.edu-assist.me/ai"
-            target="_blank"
-            rel="noreferrer"
-            className={inlineLinkClassName}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            ИИ-помощник в Лаборатории заданий
-          </a>
-        </h1>
-      </section>
+      <CaseIntro>
+        <h1>ИИ-помощник</h1>
+        <CaseMeta product={labProductBrand} year="2025" />
+      </CaseIntro>
 
       <CaseSection title="Задача">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -2257,9 +2864,12 @@ function ClassesStatisticsCase() {
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseImageGrid images={statisticIntroImage} />
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
+      <CaseIntro>
         <h1>Статистика занятий</h1>
-        <h2>Контекст</h2>
+        <CaseMeta product={assistantProductBrand} year="2025" />
+      </CaseIntro>
+
+      <CaseSection title="Контекст">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <a
             href="https://edu-assist.me/promo"
@@ -2278,29 +2888,13 @@ function ClassesStatisticsCase() {
           <li>распознавание эмоций</li>
           <li>речевую аналитику</li>
         </ul>
-        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Но преподаватели не могли{" "}
-          <strong className="font-semibold text-white/92">
-            посмотреть, как меняются их показатели со временем
-          </strong>
-          , и не понимали, улучшается ли их преподавание
-        </p>
-      </section>
+      </CaseSection>
 
       <CaseSection title="Проблема">
         <blockquote className="case-lead border-l-2 border-white/30 pl-4 text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
           Преподаватель не может увидеть, как меняются его метрики и приёмы
           преподавания в динамике
         </blockquote>
-        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          Пользователи:
-        </p>
-        <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
-          <li>не понимают, что означает каждая метрика</li>
-          <li>путаются в периодах сравнения</li>
-          <li>не могут выбрать предмет или параллель</li>
-          <li>не могут сравнить уроки между собой</li>
-        </ul>
       </CaseSection>
 
       <CaseSection title="Цель">
@@ -2373,18 +2967,12 @@ function SubscriptionCase() {
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseImageGrid images={subscriptionIntroImage} />
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>
-          <a
-            href="https://edu-assist.ru/"
-            target="_blank"
-            rel="noreferrer"
-            className={inlineLinkClassName}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            Тарифы в Лаборатории заданий
-          </a>
-        </h1>
+      <CaseIntro>
+        <h1>Тарифы</h1>
+        <CaseMeta product={labProductBrand} year="2026" />
+      </CaseIntro>
+
+      <CaseSection title="Контекст">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Чтобы масштабировать продукт и монетизацию, команда решила:
         </p>
@@ -2396,7 +2984,7 @@ function SubscriptionCase() {
           <li>сделать прозрачные условия автосписаний</li>
           <li>добавить новый тариф «Безлимитный»</li>
         </ul>
-      </section>
+      </CaseSection>
 
       <CaseSection title="Цель исследования">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -2416,15 +3004,15 @@ function SubscriptionCase() {
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Я проанализировал <strong className="font-semibold text-white/92">15+ сервисов</strong>, среди них:
         </p>
-        <h4>ИИ‑сервисы</h4>
+        <h3>ИИ‑сервисы</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Syntx, Perplexity, Gemini, ChatGPT, Claude, Lovable
         </p>
-        <h4>EdTech</h4>
+        <h3>EdTech</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Arzamas, Fitstars, MyBook, Premier
         </p>
-        <h4>Инструменты для работы</h4>
+        <h3>Инструменты для работы</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Zoom, Tilda, Kinescope, Jivo, Fyrebox, Анкетолог
         </p>
@@ -2446,7 +3034,7 @@ function SubscriptionCase() {
       <CaseImageGrid images={subscriptionTariffScreens} />
 
       <CaseSection title="Ключевые инсайты исследования">
-        <h4>Тарифы должны быть доступны из нескольких точек</h4>
+        <h3>Тарифы должны быть доступны из нескольких точек</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Лучшие сервисы дублируют вход в тарифы:
         </p>
@@ -2460,7 +3048,7 @@ function SubscriptionCase() {
           Это снижает фрустрацию и повышает конверсию
         </p>
 
-        <h4>Ограничения бесплатного тарифа должны быть видимыми</h4>
+        <h3>Ограничения бесплатного тарифа должны быть видимыми</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Паттерны:
         </p>
@@ -2470,14 +3058,14 @@ function SubscriptionCase() {
           <li>всплывающие уведомления при превышении лимита</li>
         </ul>
 
-        <h4>Апгрейд — максимально простой</h4>
+        <h3>Апгрейд — максимально простой</h3>
         <ul className="list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>1–2 клика</li>
           <li>подсветка рекомендуемого тарифа</li>
           <li>сравнение тарифов на одном экране</li>
         </ul>
 
-        <h4>Даунгрейд — всегда со следующего периода</h4>
+        <h3>Даунгрейд — всегда со следующего периода</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Стандарт индустрии:
         </p>
@@ -2486,7 +3074,7 @@ function SubscriptionCase() {
           <li>даунгрейд — с нового биллингового месяца</li>
         </ul>
 
-        <h4>Страница управления подпиской должна отвечать на 3 вопроса</h4>
+        <h3>Страница управления подпиской должна отвечать на 3 вопроса</h3>
         <ol className="list-decimal space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
           <li>Какой тариф сейчас?</li>
           <li>До какого числа он действует?</li>
@@ -2506,20 +3094,10 @@ function VkCartCase() {
     <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseImageGrid images={vkCartIntroImage} />
 
-      <section className="case-section mx-auto flex w-full flex-col gap-4">
-        <h1>
-          <a
-            href="https://vk.com/market"
-            target="_blank"
-            rel="noreferrer"
-            className={inlineLinkClassName}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            Корзина ВК Маркет
-          </a>
-          <span className="text-white/72"> — тестовое задание</span>
-        </h1>
-      </section>
+      <CaseIntro>
+        <h1>Корзина — тестовое задание</h1>
+        <CaseMeta product={vkMarketProductBrand} year="2024" />
+      </CaseIntro>
 
       <CaseSection title="Задача">
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
@@ -2548,13 +3126,13 @@ function VkCartCase() {
       </CaseSection>
 
       <CaseSection title="Исследование">
-        <h4>Анализ конкурентов и наблюдение</h4>
+        <h3>Анализ конкурентов и наблюдение</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           По модели КАНО выделил основные атрибуты корзины конкурентов и
           структурировал информацию
         </p>
 
-        <h4>Интервью</h4>
+        <h3>Интервью</h3>
         <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
           Провёл три глубинных интервью с пользователями маркетплейсов В
           выборке были как те, кто пользовался Маркетом, так и нет
@@ -2616,12 +3194,17 @@ function VkCartCase() {
 
 function AssistantPromoCase() {
   return (
-    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto text-[#fafafa]">
+    <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
       <CaseVideo
         src={withBasePath("/assistant-promo.webm")}
         title="Промо Ассистента преподавателя"
         mimeType="video/webm"
       />
+
+      <CaseIntro>
+        <h1>Промо</h1>
+        <CaseMeta product={assistantProductBrand} year="2024" />
+      </CaseIntro>
 
       <CaseSection title="Задача">
         <p className="case-description case-body text-base font-normal leading-6 tracking-[-0.2px]">
@@ -2648,19 +3231,22 @@ function AssistantPromoCase() {
 function CasePlaceholder({ title }: { title: string }) {
   return (
     <>
-      <div className="case-section flex w-full flex-col items-start gap-2 self-center text-[#fafafa]">
-        <h1>{title}</h1>
-        <h2>Кейс скоро появится</h2>
-        <p className="case-lead text-xl font-semibold leading-6 tracking-[-0.6px]">
-          Описание и фотографии
-        </p>
-        <p className="case-description text-base font-normal leading-6 tracking-[-0.2px]">
-          Здесь будет подробное описание проекта, задачи, решения и результата
-          Фотографии и материалы можно будет добавить позже
-        </p>
-      </div>
+      <div className="case-content flex min-h-0 w-full flex-1 flex-col gap-10 overflow-y-auto pr-2 text-[#fafafa]">
+        <CaseIntro>
+          <h1>{title}</h1>
+        </CaseIntro>
+        <CaseSection title="Кейс скоро появится">
+          <p className="case-lead text-xl font-semibold leading-7 tracking-[-0.6px] text-white/86">
+            Описание и фотографии
+          </p>
+          <p className="case-description text-base font-normal leading-6 tracking-[-0.2px] case-body">
+            Здесь будет подробное описание проекта, задачи, решения и результата.
+            Фотографии и материалы можно будет добавить позже
+          </p>
+        </CaseSection>
 
-      <div className="min-h-[280px] flex-1 rounded-2xl bg-white" />
+        <div className="min-h-[280px] flex-1 rounded-2xl bg-white" />
+      </div>
     </>
   );
 }

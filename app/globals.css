@@ -284,12 +284,52 @@ html {
 
 .case-content {
   --case-image-gap: 12px;
+  --case-section-gap: 40px;
   overflow-x: hidden;
   overflow-y: auto;
   min-width: 0;
   scrollbar-color: rgb(255 255 255 / 32%) transparent;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+
+.case-intro,
+.case-section {
+  width: 100%;
+  max-width: 100%;
+}
+
+.case-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: -0.2px;
+}
+
+.case-meta__row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: start;
+}
+
+.case-meta__label {
+  margin: 0;
+  color: rgb(255 255 255 / 72%);
+}
+
+.case-meta__value {
+  margin: 0;
+  min-width: 0;
+}
+
+.case-meta__value a,
+.case-meta__value span {
+  max-width: 100%;
 }
 
 .case-motion-layout {
@@ -408,6 +448,26 @@ html {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--case-image-gap);
   width: 100%;
+  align-items: stretch;
+}
+
+.case-image-grid__portrait figure {
+  height: 100%;
+}
+
+.case-image-grid__portrait .case-zoomable-image {
+  aspect-ratio: 720 / 1600;
+  width: 100%;
+  height: 100%;
+}
+
+.case-image-grid__portrait .case-zoomable-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
 }
 
 .case-zoomable-image {
@@ -416,6 +476,12 @@ html {
   padding: 0;
   border: 0;
   cursor: zoom-in;
+}
+
+.case-zoomable-image:focus-visible,
+.case-zoomable-video:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 70%);
 }
 
 .case-zoomable-image img.media-loaded {
@@ -451,6 +517,30 @@ html {
   image-rendering: auto;
 }
 
+.case-cursor-tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 120;
+  pointer-events: none;
+  width: max-content;
+  max-width: min(200px, calc(100vw - 32px));
+  padding: 7px 10px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 10px;
+  background: rgb(12 12 12 / 88%);
+  backdrop-filter: blur(10px);
+  color: #fafafa;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -0.1px;
+  text-align: left;
+  white-space: normal;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  will-change: transform;
+}
+
 .case-content::-webkit-scrollbar {
   width: 8px;
 }
@@ -469,6 +559,29 @@ html {
 .case-content::-webkit-scrollbar-thumb:hover {
   background: rgb(255 255 255 / 42%);
   background-clip: content-box;
+}
+
+.case-scroll-jump {
+  background: rgb(0 0 0 / 60%);
+  transform: translate(-50%, 16px);
+  opacity: 0;
+  transition:
+    opacity 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.case-scroll-jump--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.case-scroll-jump svg {
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.case-scroll-jump:hover svg,
+.case-scroll-jump:focus-visible svg {
+  transform: translateY(2px);
 }
 
 .case-window h1,
@@ -1133,9 +1246,41 @@ html {
 
   .case-window .case-description,
   .case-window ul,
-  .case-window ol {
+  .case-window ol,
+  .case-content .case-body,
+  .case-content .case-meta {
     font-size: 14px;
     line-height: 20px;
+  }
+
+  .case-content {
+    --case-image-gap: 10px;
+    --case-section-gap: 32px;
+    gap: var(--case-section-gap) !important;
+    padding-right: 0;
+    scrollbar-gutter: auto;
+  }
+
+  .case-content video {
+    max-width: 100%;
+  }
+
+  .case-meta {
+    gap: 10px;
+  }
+
+  .case-meta__row {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 6px 10px;
+  }
+
+  .case-motion-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .case-figma-embed {
+    height: min(56vh, 520px);
+    min-height: 320px;
   }
 
   .case-window {
@@ -1145,13 +1290,21 @@ html {
     width: 100% !important;
     padding: var(--case-padding);
   }
+}
 
-  .case-content {
-    scrollbar-gutter: auto;
+@media (max-width: 520px) {
+  .case-meta__row {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
-  .case-content video {
-    max-width: 100%;
+  .case-content {
+    --case-image-gap: 6px;
+  }
+
+  .case-figma-embed {
+    height: min(52vh, 440px);
+    min-height: 280px;
   }
 }
 
