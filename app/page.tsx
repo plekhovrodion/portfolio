@@ -90,6 +90,7 @@ const MOBILE_LAYOUT_BREAKPOINT = 900;
 const NARROW_MOBILE_BREAKPOINT = 520;
 const MOBILE_FILE_COLUMNS = 3;
 const MUSIC_BACKGROUND_VIDEO = withBasePath("/dancing-rat-chess-type-beat.webm");
+const CV_PDF = withBasePath("/cv.pdf");
 
 const vkCartFigmaPrototype =
   "https://www.figma.com/proto/1C93yxYA4hkGBogyImvYgE/%D0%A2%D0%B5%D1%81%D1%82%D0%BE%D0%B2%D0%BE%D0%B5-%D0%B7%D0%B0%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5-VK-%D0%9C%D0%B0%D1%80%D0%BA%D0%B5%D1%82-%D0%9A%D0%BE%D1%80%D0%B7%D0%B8%D0%BD%D0%B0-%C2%B7-%D0%9F%D0%BB%D0%B5%D1%85%D0%BE%D0%B2-%D0%A0%D0%BE%D0%B4%D0%B8%D0%BE%D0%BD?node-id=2-8527&viewport=-7125%2C68%2C0.66&scaling=scale-down&starting-point-node-id=2%3A8527&show-proto-sidebar=1&page-id=0%3A1";
@@ -2364,20 +2365,20 @@ function AboutMeContacts() {
         Почта
       </a>
       <a
-        href="https://vk.com/plekhovrodion"
-        target="_blank"
-        rel="noreferrer"
-        className={aboutMeContactButtonClassName}
-      >
-        ВК
-      </a>
-      <a
         href="https://www.behance.net/plekhovrodion"
         target="_blank"
         rel="noreferrer"
         className={aboutMeContactButtonClassName}
       >
         Behance
+      </a>
+      <a
+        href={CV_PDF}
+        target="_blank"
+        rel="noreferrer"
+        className={aboutMeContactButtonClassName}
+      >
+        Резюме
       </a>
     </nav>
   );
@@ -2452,7 +2453,7 @@ function AboutMeCase() {
       <CaseSection title="Достижения">
         <div className="flex flex-col gap-6">
           <div>
-            <h3>Достижения продуктов</h3>
+            <h3>Продукты</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
               {aboutMeProductHighlights.map((item) => (
                 <li key={item.title}>
@@ -2478,7 +2479,7 @@ function AboutMeCase() {
           </div>
 
           <div>
-            <h3>Достижения в команде</h3>
+            <h3>Команда</h3>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-base font-normal leading-6 tracking-[-0.2px] case-body">
               {aboutMeTeamHighlights.map((item) => (
                 <li key={item.title}>
@@ -2524,20 +2525,6 @@ function AboutMeCase() {
               </a>
             </p>
             <p>Графический дизайнер · Июнь 2021 — Июнь 2023 (2 года и 1 месяц)</p>
-          </li>
-          <li>
-            <p className="font-semibold text-white/92">
-              <a
-                href="https://m1casino.ru/"
-                target="_blank"
-                rel="noreferrer"
-                className={inlineLinkClassName}
-                onPointerDown={(event) => event.stopPropagation()}
-              >
-                Казино М1
-              </a>
-            </p>
-            <p>Графический дизайнер · Март 2021 — Май 2022 (1 год и 3 месяца)</p>
           </li>
         </ul>
       </CaseSection>
@@ -3862,6 +3849,14 @@ export default function Home() {
           </Link>
           <div className="flex items-center gap-4">
             <a
+              href={CV_PDF}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md transition hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70"
+            >
+              Резюме
+            </a>
+            <a
               href="https://t.me/r_plekhov"
               target="_blank"
               rel="noreferrer"
@@ -3943,14 +3938,16 @@ export default function Home() {
             </div>
             <button
               type="button"
-              aria-label="Подробнее обо мне"
-              className="profile-card-expand grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+              className="profile-card-expand inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => showCaseWindow("about-me")}
             >
+              <span className="whitespace-nowrap text-[14px] font-normal leading-5 tracking-[-0.2px]">
+                Обо мне
+              </span>
               <Maximize2
                 aria-hidden="true"
-                className="size-4"
+                className="size-3.5"
                 strokeWidth={2.2}
               />
             </button>
