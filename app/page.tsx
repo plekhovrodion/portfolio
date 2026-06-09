@@ -3862,7 +3862,7 @@ export default function Home() {
               rel="noreferrer"
               className="rounded-md transition hover:text-white/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70"
             >
-              @r_plekhov
+              Телеграм
             </a>
             <button
               type="button"
@@ -3938,13 +3938,16 @@ export default function Home() {
             </div>
             <button
               type="button"
+              aria-label={isMobileLayout ? "Обо мне" : undefined}
               className="profile-card-expand inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => showCaseWindow("about-me")}
             >
-              <span className="whitespace-nowrap text-[14px] font-normal leading-5 tracking-[-0.2px]">
-                Обо мне
-              </span>
+              {!isMobileLayout ? (
+                <span className="whitespace-nowrap text-[14px] font-normal leading-5 tracking-[-0.2px]">
+                  Обо мне
+                </span>
+              ) : null}
               <Maximize2
                 aria-hidden="true"
                 className="size-3.5"
