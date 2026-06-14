@@ -26,7 +26,7 @@ export const siteConfig = {
   telegram: "https://t.me/r_plekhov",
   behance: "https://www.behance.net/plekhovrodion",
   employer: "https://sbereducation.ru/",
-  ogImage: withBasePath("/profile.png"),
+  ogImage: withBasePath("/profile@2x.webp"),
 } as const;
 
 export const productionSiteUrl = "https://plekhov.online";

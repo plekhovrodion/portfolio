@@ -7,7 +7,7 @@ export function YandexMetrika() {
     <>
       <Script
         id="yandex-metrika"
-        strategy="afterInteractive"
+        strategy="lazyOnload"
         dangerouslySetInnerHTML={{
           __html: `
             (function(m,e,t,r,i,k,a){

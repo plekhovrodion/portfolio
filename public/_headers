@@ -4,6 +4,9 @@
 /wall.webm
   Cache-Control: public, max-age=31536000, immutable
 
+/wall-poster.webp
+  Cache-Control: public, max-age=31536000, immutable
+
 /dancing-rat-chess-type-beat.webm
   Cache-Control: public, max-age=31536000, immutable
 
@@ -14,6 +17,12 @@
   Cache-Control: public, max-age=604800
 
 /cases/*
+  Cache-Control: public, max-age=604800
+
+/profile.webp
+  Cache-Control: public, max-age=604800
+
+/profile@2x.webp
   Cache-Control: public, max-age=604800
 
 /profile.png

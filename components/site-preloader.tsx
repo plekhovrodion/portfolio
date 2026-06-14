@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState } from "react";
 import { withBasePath } from "@/lib/site";
 
-const MIN_VISIBLE_MS = 750;
-const MAX_WAIT_MS = 5500;
+const MIN_VISIBLE_MS = 300;
+const MAX_WAIT_MS = 2500;
 const EXIT_MS = 480;
 
 type PreloaderPhase = "loading" | "exiting" | "done";
@@ -34,35 +34,7 @@ function preloadImage(src: string) {
   });
 }
 
-function waitForBackgroundVideo(
-  videoRef: RefObject<HTMLVideoElement | null>,
-) {
-  return new Promise<void>((resolve) => {
-    const video = videoRef.current;
-
-    if (!video) {
-      resolve();
-      return;
-    }
-
-    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
-      resolve();
-      return;
-    }
-
-    function handleReady() {
-      resolve();
-    }
-
-    video.addEventListener("canplay", handleReady, { once: true });
-    video.addEventListener("loadeddata", handleReady, { once: true });
-    video.addEventListener("error", handleReady, { once: true });
-  });
-}
-
-export function useSitePreloader(
-  backgroundVideoRef: RefObject<HTMLVideoElement | null>,
-) {
+export function useSitePreloader() {
   const [phase, setPhase] = useState<PreloaderPhase>("loading");
   const startedAtRef = useRef(Date.now());
   const hasFinishedRef = useRef(false);
@@ -105,8 +77,7 @@ export function useSitePreloader(
 
     void Promise.all([
       waitForWindowLoad(),
-      preloadImage(withBasePath("/profile.png")),
-      waitForBackgroundVideo(backgroundVideoRef),
+      preloadImage(withBasePath("/profile.webp")),
     ]).then(() => {
       window.clearTimeout(maxTimeoutId);
       void finishLoading();
@@ -115,7 +86,7 @@ export function useSitePreloader(
     return () => {
       window.clearTimeout(maxTimeoutId);
     };
-  }, [backgroundVideoRef]);
+  }, []);
 
   return {
     isActive: phase !== "done",

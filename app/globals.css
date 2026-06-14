@@ -48,11 +48,6 @@ html {
   padding: 16px;
 }
 
-.portfolio-main--preloading {
-  opacity: 0;
-  pointer-events: none;
-}
-
 .site-preloader {
   position: fixed;
   inset: 0;
